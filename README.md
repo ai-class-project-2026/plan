@@ -364,26 +364,29 @@ C 테스트셋 30개를 먼저 모아서 사전 필터와 공개 모델에 넣�
 
 ```
 [Next.js 웹앱]
-     │  인증, DB, 실시간 통신
+     │  REST API + WebSocket
      ▼
-[Supabase: PostgreSQL + Realtime + Auth]
-     │  DB 웹훅 / 서버 호출
+[백엔드 서버: FastAPI]
+     ├─ 인증         이메일/구글 로그인, JWT
+     ├─ REST API     워크스페이스, 채널, 메시지, 일정, 할 일, 신고
+     ├─ WebSocket    채널별 실시간 채팅, AI 카드 푸시
+     ├─ /moderate    욕설 필터 (ONNX, CPU, 동기 처리)
+     └─ /schedule    일정 추출 (소형 LLM, 비동기 큐)
+     │
      ▼
-[AI 서버: FastAPI]
-     ├─ /moderate   욕설 필터 (ONNX, CPU, 동기 처리)
-     └─ /schedule   일정 추출 (소형 LLM, 비동기 큐)
+[PostgreSQL]
 ```
 
-* 메시지 저장 전에 /moderate를 호출하고 결과를 같이 저장
-* /schedule은 채널별 디바운스 (마지막 메시지 후 10초 또는 5턴마다)
+* 메시지 저장 전에 서버 안에서 욕설 판정을 하고 결과를 같이 저장한 뒤 WebSocket으로 브로드캐스트
+* 일정 추출은 채널별 디바운스 (마지막 메시지 후 10초 또는 5턴마다), 결과 카드는 WebSocket으로 푸시
 
 ### 10.2 기술 스택
 
 | 영역  | 선택  | 이유  |
 |-----|-----|-----|
 | 프론트 | Next.js + Tailwind | 빠른 개발, Vercel 배포 |
-| 백엔드/DB | Supabase | 실시간 채팅, 인증, DB를 한 번에 |
-| AI 서버 | FastAPI | 파이썬 모델 서빙 표준 |
+| 백엔드 | FastAPI | 인증, REST API, WebSocket 실시간 채팅, AI 서빙을 파이썬 서버 하나로 |
+| DB  | PostgreSQL + SQLAlchemy + Alembic | 관계형 스키마, 마이그레이션 관리 |
 | 욕설 모델 | KcELECTRA → ONNX | CPU에서도 빠름 |
 | 일정 모델 | 소형 LLM + LoRA, 4bit | 저비용 학습/서빙 |
 | 실험 관리 | W&B 또는 CSV 로그 | 버전별 성능 기록 |
@@ -391,7 +394,7 @@ C 테스트셋 30개를 먼저 모아서 사전 필터와 공개 모델에 넣�
 ### 10.3 DB 스키마
 
 ```
-users(id, name, email, created_at)
+users(id, name, email, password_hash, google_id, created_at)
 workspaces(id, name, invite_code, ai_schedule_on, filter_mode, filter_level)
 members(workspace_id, user_id, role)
 channels(id, workspace_id, name)
@@ -408,6 +411,20 @@ todos(id, workspace_id, title, assignee_id, due_date, done)
 ai_suggestions.action과 reports가 그대로 재학습/평가 데이터가 된다.
 
 ### 10.4 API 명세
+
+서비스 API (웹앱이 호출):
+
+```
+POST /auth/signup, /auth/login, /auth/google     → JWT 발급
+GET/POST        /workspaces, /workspaces/{id}/members, /invites/{code}
+GET/POST        /channels/{id}/messages
+GET/POST/PATCH/DELETE  /events, /todos
+POST            /suggestions/{id}/action          (added | edited | ignored)
+POST            /reports                          (false_positive | missed)
+WS              /ws/channels/{id}                 새 메시지, AI 일정 카드 실시간 수신
+```
+
+AI API (서버 내부에서 호출, 평가/디스코드 봇에서도 직접 호출 가능):
 
 ```
 POST /moderate
@@ -439,7 +456,7 @@ POST /schedule
 
 | 담당  | 업무  |
 |-----|-----|
-| A: 플랫폼 | Next.js, Supabase, 채팅/캘린더/할 일, AI 카드 UI |
+| A: 플랫폼 | Next.js, FastAPI 서비스 API(인증, DB, WebSocket), 채팅/캘린더/할 일, AI 카드 UI |
 | B: 일정 AI | 날짜 정규화, 합성 데이터, LoRA 학습, /schedule 서빙 |
 | C: 욕설 AI + 평가 | 증강, KcELECTRA 학습, /moderate 서빙, 테스트셋, 대시보드 |
 
@@ -490,8 +507,8 @@ GitHub 오가니제이션에 레포 2개를 만든다. 언어 기준(TypeScript 
 
 | 레포  | 언어  | 내용  | 담당  |
 |-----|-----|-----|-----|
-| teamplmate-web | TypeScript | Next.js 웹앱, Supabase(마이그레이션, Edge Function) | A   |
-| teamplmate-server | Python | FastAPI AI 서버, 학습 코드, 평가, 데이터, 디스코드 봇 | B, C |
+| teamplmate-web | TypeScript | Next.js 웹앱 (화면만, 백엔드 없음) | A   |
+| teamplmate-server | Python | FastAPI 백엔드(인증, DB, WebSocket, AI 서빙), 학습 코드, 평가, 데이터, 디스코드 봇 | A, B, C |
 
 모델 가중치는 레포에 넣지 않고 Hugging Face Hub(비공개)에 버전별로 올린다. 대용량 데이터는 스크립트로 재현하거나 HF Datasets / 구글 드라이브에 둔다.
 
@@ -500,7 +517,7 @@ GitHub 오가니제이션에 레포 2개를 만든다. 언어 기준(TypeScript 
 ```
 teamplmate-web/
 ├── README.md
-├── .env.example                # SUPABASE_URL, AI_SERVER_URL
+├── .env.example                # API_URL (FastAPI 서버 주소)
 ├── app/
 │   ├── (auth)/login/
 │   ├── onboarding/             # 워크스페이스 생성, 대화 분석 동의
@@ -516,13 +533,9 @@ teamplmate-web/
 │   ├── calendar/
 │   └── ui/
 ├── lib/
-│   ├── supabase/               # 클라이언트, realtime 구독
-│   └── api/                    # AI 서버 호출 래퍼 + openapi 생성 타입
-├── supabase/
-│   ├── migrations/             # users, workspaces, messages, events,
-│   │                           # ai_suggestions, reports, todos
-│   ├── functions/              # 메시지 insert → AI 서버 호출
-│   └── seed.sql                # 시연용 더미 워크스페이스/대화
+│   ├── api/                    # FastAPI 호출 래퍼 + openapi 생성 타입
+│   ├── auth/                   # JWT 저장, 로그인 상태
+│   └── ws/                     # WebSocket 연결, useMessages 등 실시간 훅
 └── package.json
 ```
 
@@ -532,14 +545,25 @@ teamplmate-web/
 teamplmate-server/
 ├── README.md
 ├── .env.example
-├── docker-compose.yml          # 로컬 AI 서버 실행
+├── docker-compose.yml          # 로컬 서버 + PostgreSQL 실행
 ├── Makefile                    # make dev / make eval / make export-onnx
 ├── pyproject.toml
-├── ai-server/                  # FastAPI 서빙
+├── backend/                    # FastAPI 서버 (서비스 API + AI 서빙)
 │   ├── app/
 │   │   ├── main.py
 │   │   ├── schemas.py          # Pydantic 요청/응답 (API 기준)
+│   │   ├── db/
+│   │   │   ├── models.py       # SQLAlchemy 모델 (10.3 스키마)
+│   │   │   └── session.py
+│   │   ├── auth.py             # 비밀번호 해시, JWT, 구글 OAuth
 │   │   ├── routers/
+│   │   │   ├── auth.py         # /auth/*
+│   │   │   ├── workspaces.py   # 워크스페이스, 멤버, 초대
+│   │   │   ├── messages.py     # 채널 메시지 (저장 전 욕설 판정)
+│   │   │   ├── events.py       # 일정, AI 제안 액션
+│   │   │   ├── todos.py
+│   │   │   ├── reports.py      # 오탐/미탐 신고
+│   │   │   ├── ws.py           # WS /ws/channels/{id}
 │   │   │   ├── moderate.py     # POST /moderate   (C)
 │   │   │   └── schedule.py     # POST /schedule   (B)
 │   │   ├── moderation/         # (C) 추론
@@ -551,6 +575,8 @@ teamplmate-server/
 │   │       ├── trigger.py      # 키워드 트리거 필터
 │   │       ├── tracker.py      # 소형 LLM 호출, JSON 검증
 │   │       └── reconcile.py    # 기존 캘린더와 대조
+│   ├── migrations/             # Alembic
+│   ├── seed.py                 # 시연용 더미 워크스페이스/대화
 │   ├── tests/
 │   └── Dockerfile
 ├── ml/                         # 학습 코드
@@ -580,7 +606,7 @@ teamplmate-server/
 │       ├── test_C_human/       # 필터 뚫기 챌린지 (커밋)
 │       └── test_D_fp/          # 오탐 유도셋 (커밋)
 ├── bots/
-│   └── discord/                # 플랜 B: 같은 AI 서버를 쓰는 디스코드 봇
+│   └── discord/                # 플랜 B: 같은 서버의 AI API를 쓰는 디스코드 봇
 └── notebooks/                  # Colab 학습용
 ```
 
@@ -588,8 +614,8 @@ teamplmate-server/
 
 * 날짜 정규화(dateparse_ko)를 학습과 서빙이 같은 레포에서 import하므로 결과가 어긋나지 않는다
 * CI가 단순하다: web은 lint/build, server는 pytest/평가
-* 담당이 레포 단위로 나뉜다: A는 web, B와 C는 server
-* DB 스키마는 web 레포에 둔다. server는 AI 결과만 API로 돌려주고 DB에 직접 쓰지 않는다
+* 담당이 레포 단위로 나뉜다: 화면은 web, 백엔드와 AI는 server
+* DB 스키마, 인증, 실시간 채팅까지 전부 server(FastAPI)가 맡는다. web은 API와 WebSocket만 호출한다
 
 ### 16.5 두 레포 사이 API 규칙
 
@@ -630,10 +656,11 @@ teamplmate-server/
 **할 일**
 
 * 두 레포 뼈대, 폴더 구조, CI, .env 관리
-* Supabase DB 스키마, 실시간 채팅 연결 로직(구독 훅). 화면은 파트 2가 만든다
-* FastAPI 서버 뼈대, API 스키마(`schemas.py`) 확정
+* FastAPI 백엔드: DB 스키마(SQLAlchemy + Alembic), 인증(JWT, 구글 로그인), 서비스 REST API, WebSocket 실시간 채팅
+* web 쪽 API 래퍼와 실시간 훅(`useMessages` 등). 화면은 파트 2가 만든다
+* API 스키마(`schemas.py`) 확정
 * 일정 AI 핵심: 합성 데이터 생성기, LoRA 파인튜닝, 상태 추적(`tracker.py`), 기존 일정 대조(`reconcile.py`)
-* 통합: 메시지 저장 → AI 서버 호출 → 카드 표시까지 전체 흐름 연결
+* 통합: 메시지 저장 → 욕설 판정/일정 추출 → WebSocket으로 카드 표시까지 전체 흐름 연결
 * 욕설 모델 ONNX 변환과 서빙을 파트 3과 함께 작업
 * 초보자 지원: 모든 PR 코드 리뷰, 파트별 템플릿 코드 제공, 주 1회 30분 페어 작업
 
@@ -656,7 +683,7 @@ teamplmate-server/
 
 **완료 기준**: 더미 데이터로 모든 화면이 동작하고, 전문가가 준 훅/API를 연결하면 실제 데이터가 보인다.
 
-**미리 공부할 것**: Next.js App Router 기초, Tailwind, shadcn/ui, Supabase JS 기초
+**미리 공부할 것**: Next.js App Router 기초, Tailwind, shadcn/ui, fetch로 REST API 호출하기
 
 ### 17.4 파트 3. 초보자: 욕설 AI
 
@@ -697,8 +724,8 @@ teamplmate-server/
 
 | 주차  | 파트 1 (전문가) | 파트 2 (웹) | 파트 3 (욕설) | 파트 4 (날짜/데이터) |
 |-----|------------|----------|-----------|---------------|
-| 1   | 레포 뼈대, DB 스키마, API 스키마 | Next.js 튜토리얼, 와이어프레임, 로그인 | 데이터 수집, 기존 필터로 우회 30개 테스트 | 파일럿 20개 채점 (가설 검증) |
-| 2   | 실시간 채팅 훅, FastAPI 뼈대(더미 응답) | 워크스페이스, 채널 화면 | 증강 규칙 5종  | 날짜 기본 규칙 (오늘/내일/요일) |
+| 1   | 레포 뼈대, DB 스키마(SQLAlchemy), API 스키마 | Next.js 튜토리얼, 와이어프레임, 로그인 | 데이터 수집, 기존 필터로 우회 30개 테스트 | 파일럿 20개 채점 (가설 검증) |
+| 2   | 인증, WebSocket 채팅 + 실시간 훅, AI API 뼈대(더미 응답) | 워크스페이스, 채널 화면 | 증강 규칙 5종  | 날짜 기본 규칙 (오늘/내일/요일) |
 | 3   | 합성 데이터 생성기 | 채팅 화면    | 증강 나머지 5종, 1차 학습 | 날짜 나머지 규칙, 테스트 100개 |
 | 4   | LoRA 1차 학습 | 캘린더, 할 일 | 필터 뚫기 챌린지 (C/D 수집) | 실제 테스트셋 역할극 + 라벨링 |
 | 5   | 상태 추적 개선, /schedule | AI 카드 UI, 가림 UI, 설정 | 2차 학습, 화이트리스트 | 평가 실행, 결과 CSV |
