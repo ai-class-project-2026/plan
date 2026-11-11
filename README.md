@@ -374,7 +374,7 @@ C 테스트셋 30개를 먼저 모아서 사전 필터와 공개 모델에 넣�
      └─ /schedule    일정 추출 (소형 LLM, 비동기 큐)
      │
      ▼
-[PostgreSQL]
+[SQLite]
 ```
 
 * 메시지 저장 전에 서버 안에서 욕설 판정을 하고 결과를 같이 저장한 뒤 WebSocket으로 브로드캐스트
@@ -386,7 +386,7 @@ C 테스트셋 30개를 먼저 모아서 사전 필터와 공개 모델에 넣�
 |-----|-----|-----|
 | 프론트 | Next.js + Tailwind | 빠른 개발, Vercel 배포 |
 | 백엔드 | FastAPI | 인증, REST API, WebSocket 실시간 채팅, AI 서빙을 파이썬 서버 하나로 |
-| DB  | PostgreSQL + SQLAlchemy + Alembic | 관계형 스키마, 마이그레이션 관리 |
+| DB  | SQLite + SQLAlchemy(async, aiosqlite) + Alembic | 별도 DB 서버 없이 파일 하나, DATABASE_URL만 바꾸면 다른 DB로 이전 가능 |
 | 욕설 모델 | KcELECTRA → ONNX | CPU에서도 빠름 |
 | 일정 모델 | 소형 LLM + LoRA, 4bit | 저비용 학습/서빙 |
 | 실험 관리 | W&B 또는 CSV 로그 | 버전별 성능 기록 |
@@ -545,7 +545,7 @@ teamplmate-web/
 teamplmate-server/
 ├── README.md
 ├── .env.example
-├── docker-compose.yml          # 로컬 서버 + PostgreSQL 실행
+├── alembic.ini
 ├── Makefile                    # make dev / make eval / make export-onnx
 ├── pyproject.toml
 ├── backend/                    # FastAPI 서버 (서비스 API + AI 서빙)
