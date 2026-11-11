@@ -78,7 +78,7 @@ P0: 시연에 꼭 필요 / P1: 완성도 상승 / P2: 시간 남으면
 
 | 영역  | 기능  | 우선순위 |
 |-----|-----|------|
-| 계정  | 이메일/구글 로그인 | P0   |
+| 계정  | 이메일 로그인 (자체 users 테이블) | P0   |
 | 워크스페이스 | 생성, 초대 링크, 멤버 목록 | P0   |
 | 채팅  | 채널 채팅(실시간), 멘션 | P0   |
 | 채팅  | 파일 첨부, 답장 | P2   |
@@ -367,7 +367,7 @@ C 테스트셋 30개를 먼저 모아서 사전 필터와 공개 모델에 넣�
      │  REST API + WebSocket
      ▼
 [백엔드 서버: FastAPI]
-     ├─ 인증         이메일/구글 로그인, JWT
+     ├─ 인증         이메일 로그인, JWT
      ├─ REST API     워크스페이스, 채널, 메시지, 일정, 할 일, 신고
      ├─ WebSocket    채널별 실시간 채팅, AI 카드 푸시
      ├─ /moderate    욕설 필터 (ONNX, CPU, 동기 처리)
@@ -394,7 +394,7 @@ C 테스트셋 30개를 먼저 모아서 사전 필터와 공개 모델에 넣�
 ### 10.3 DB 스키마
 
 ```
-users(id, name, email, password_hash, google_id, created_at)
+users(id, name, email, password_hash, created_at)
 workspaces(id, name, invite_code, ai_schedule_on, filter_mode, filter_level)
 members(workspace_id, user_id, role)
 channels(id, workspace_id, name)
@@ -415,7 +415,7 @@ ai_suggestions.action과 reports가 그대로 재학습/평가 데이터가 된�
 서비스 API (웹앱이 호출):
 
 ```
-POST /auth/signup, /auth/login, /auth/google     → JWT 발급
+POST /auth/signup, /auth/login                   → JWT 발급
 GET/POST        /workspaces, /workspaces/{id}/members, /invites/{code}
 GET/POST        /channels/{id}/messages
 GET/POST/PATCH/DELETE  /events, /todos
@@ -555,7 +555,7 @@ teamplmate-server/
 │   │   ├── db/
 │   │   │   ├── models.py       # SQLAlchemy 모델 (10.3 스키마)
 │   │   │   └── session.py
-│   │   ├── auth.py             # 비밀번호 해시, JWT, 구글 OAuth
+│   │   ├── auth.py             # 비밀번호 해시, JWT
 │   │   ├── routers/
 │   │   │   ├── auth.py         # /auth/*
 │   │   │   ├── workspaces.py   # 워크스페이스, 멤버, 초대
@@ -656,7 +656,7 @@ teamplmate-server/
 **할 일**
 
 * 두 레포 뼈대, 폴더 구조, CI, .env 관리
-* FastAPI 백엔드: DB 스키마(SQLAlchemy + Alembic), 인증(JWT, 구글 로그인), 서비스 REST API, WebSocket 실시간 채팅
+* FastAPI 백엔드: DB 스키마(SQLAlchemy + Alembic), 인증(이메일 + JWT), 서비스 REST API, WebSocket 실시간 채팅
 * web 쪽 API 래퍼와 실시간 훅(`useMessages` 등). 화면은 파트 2가 만든다
 * API 스키마(`schemas.py`) 확정
 * 일정 AI 핵심: 합성 데이터 생성기, LoRA 파인튜닝, 상태 추적(`tracker.py`), 기존 일정 대조(`reconcile.py`)

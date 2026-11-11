@@ -159,11 +159,6 @@ s.payload.event   // { title, date: "2026-10-15", weekday, start: "19:00:00" | n
 
 브라우저 창 두 개(하나는 시크릿 창)에서 다른 계정으로 로그인하고, 같은 채널에서 메시지를 보내 보세요.
 
-### 구글 로그인
-
-1. 파트 1이 Google Cloud Console에서 Client ID를 만들어 server `.env`의 `GOOGLE_CLIENT_ID`와 web `.env.local`의 `NEXT_PUBLIC_GOOGLE_CLIENT_ID`에 넣어줘요
-2. [Google Identity Services](https://developers.google.com/identity/gsi/web) 버튼을 띄우고, 콜백으로 받은 `credential`을 `googleLogin(credential)`에 넘기면 끝이에요
-
 ## 4. 작업 규칙
 
 * `main`에서 바로 작업하지 말고 브랜치를 따서 작게 PR을 올려요 (`feat/login-page`처럼)
