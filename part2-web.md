@@ -21,7 +21,7 @@ AI가 아무리 좋아도 발표에서 심사위원이 보는 건 결국 화면�
 
 ## 어려운 부분은 누가 해요?
 
-실시간으로 메시지가 오가게 하는 연결 코드(FastAPI 서버와 WebSocket 연결)는 전문가가 훅(함수 하나)으로 만들어줘요. 예를 들어 `useMessages(channelId)`를 부르면 메시지 목록이 나오는 식이에요. 그걸 받아서 예쁘게 보여주는 것에만 집중하면 돼요.
+서버, 로그인, 실시간 연결은 이미 다 만들어져 있어요. `useMessages(channelId)`를 부르면 메시지 목록이 실시간으로 나오고, `send("안녕")`을 부르면 전송돼요. 화면을 만드는 것에만 집중하면 돼요. 사용법은 아래 "실제로 시작하기"에 있어요.
 
 ## 진행 순서
 
@@ -38,7 +38,7 @@ AI가 아무리 좋아도 발표에서 심사위원이 보는 건 결국 화면�
 ## 첫 주에 할 일
 
 - [ ] Next.js 공식 튜토리얼(nextjs.org/learn) 앞부분 따라 하기
-- [ ] 팀 레포(teamplmate-web) 받아서 로컬에서 실행해보기
+- [ ] 팀 레포 [web](https://github.com/ai-class-project-2026/web) 받아서 로컬에서 실행해보기
 - [ ] 기획서 7장(화면 구성)을 보고 화면 7개를 손으로 스케치
 - [ ] 로그인 화면 하나 완성해서 첫 PR 올리기
 
@@ -57,3 +57,116 @@ AI가 아무리 좋아도 발표에서 심사위원이 보는 건 결국 화면�
 ## 이 파트를 하면 얻는 것
 
 포트폴리오에 바로 보여줄 수 있는 실제로 돌아가는 웹 서비스 화면, 그리고 React/Next.js 실무 감각.
+
+---
+
+# 실제로 시작하기
+
+## 1. 내 컴퓨터에서 띄우기
+
+server와 web 레포를 **같은 폴더 안에 나란히** 받아요.
+
+```sh
+git clone https://github.com/ai-class-project-2026/server.git
+git clone https://github.com/ai-class-project-2026/web.git
+```
+
+서버 (터미널 1). [uv](https://docs.astral.sh/uv/)가 필요해요.
+
+```sh
+cd server
+cp .env.example .env
+python3 -c "import secrets; print(secrets.token_urlsafe(32))"   # 나온 값을 .env의 JWT_SECRET= 뒤에 붙여넣기
+uv sync
+make migrate
+make dev        # http://localhost:8000/docs 에서 모든 API를 직접 눌러볼 수 있어요
+```
+
+웹 (터미널 2):
+
+```sh
+cd web
+cp .env.example .env.local
+npm install
+npm run dev     # http://localhost:3000
+```
+
+## 2. 이미 만들어져 있는 것
+
+| 쓰는 법 | 하는 일 |
+|---|---|
+| `import { login, signup, logout, useMe } from "@/lib/auth"` | 로그인. `await login(email, pw)` → `{ ok }`. `useMe()`는 로딩 중 `undefined`, 로그아웃 상태 `null`, 로그인 상태면 사용자 |
+| `import { api } from "@/lib/api"` | 나머지 모든 API. 주소를 치면 자동완성되고, 필드를 틀리면 빨간 줄이 떠요 |
+| `import { useMessages } from "@/lib/ws"` | 채팅: `const { messages, send, loadOlder, hasMore } = useMessages(channelId)` |
+| `import { useSuggestions } from "@/lib/ws"` | AI 일정 카드: `const { suggestions, act } = useSuggestions(channelId)` |
+| `import { splitSpans } from "@/lib/mask"` | 욕설 가리기: 메시지를 `[{ text, hidden }]` 조각으로 나눠줘요 |
+| `import type { Workspace, Message, Event, Todo, Suggestion } from "@/lib/api"` | props 타입 |
+
+API 호출 예시:
+
+```tsx
+const { data: workspaces } = await api.GET("/workspaces");
+const { data: ws } = await api.POST("/workspaces", { body: { name: "팀플", ai_schedule_on: true } });
+await api.POST("/invites/{code}", { params: { path: { code } } });   // 초대 링크로 참가
+const { data: members } = await api.GET("/workspaces/{workspace_id}/members", {
+  params: { path: { workspace_id } },
+});
+```
+
+`{ data, error }`에서 `data`가 없으면 실패예요. `error.detail`에 이유가 들어 있어요.
+
+## 3. 화면별 할 일
+
+폴더 구조는 기획서 16.2를 따라요.
+
+| 화면 | 경로 | 쓰는 것 | 메모 |
+|---|---|---|---|
+| 로그인/가입 | `app/(auth)/login/` | `login`, `signup` | 성공하면 `/onboarding`이나 워크스페이스로 이동 |
+| 온보딩 | `app/onboarding/` | `POST /workspaces` | **대화 분석 동의 체크박스** 값이 `ai_schedule_on` (미성년자 대상이라 필수) |
+| 초대 링크 | `app/invite/[code]/` | `POST /invites/{code}` | 링크 = `https://<사이트>/invite/<invite_code>` |
+| 채널 목록 | 레이아웃 왼쪽 | `GET/POST /workspaces/{id}/channels` | 워크스페이스를 만들면 `일반` 채널이 자동으로 생겨요 |
+| 채팅 | `app/w/[workspaceId]/c/[channelId]/` | `useMessages`, `useSuggestions` | 맨 위로 스크롤하면 `loadOlder()` |
+| 캘린더 | `app/w/[workspaceId]/calendar/` | `GET/POST /workspaces/{id}/events`, `PATCH/DELETE /events/{id}` | FullCalendar. `status === "cancelled"`는 숨기거나 회색 |
+| 할 일 | `app/w/[workspaceId]/todos/` | `GET/POST /workspaces/{id}/todos`, `PATCH/DELETE /todos/{id}` | 담당자는 멤버 목록에서 고르기 |
+| 설정 | `app/w/[workspaceId]/settings/` | `PATCH /workspaces/{id}` | owner만 저장 가능 (아니면 403). 내 역할은 멤버 목록에서 `useMe()`의 id로 찾기 |
+| 대시보드 | `app/dashboard/` | server의 `eval/reports/*.csv` | CSV를 `public/reports/`에 복사해서 차트로 |
+
+### 욕설 가림 메시지
+
+메시지에 `is_profane`, `profanity_spans`가 들어 있어요. 워크스페이스 `filter_mode`에 따라 보여주는 방식이 달라요.
+
+* `mask`: `splitSpans(m.text, m.profanity_spans)`로 나눠서 `hidden` 조각만 `●●`로 바꾸고, [보기]를 누르면 원문 표시
+* `warn`: 원문은 보여주고 경고 표시
+* `notify_admin`: `mask`처럼 가리고, owner 화면에는 따로 표시
+
+`is_profane`인데 `profanity_spans`가 비어 있으면 (AI 모델이 잡은 경우) 메시지 전체를 가려요.
+신고 버튼: `api.POST("/reports", { body: { message_id, type: "false_positive" } })` (멀쩡한데 가려짐) 또는 `"missed"` (욕인데 안 가려짐).
+
+### AI 일정 카드
+
+```ts
+s.payload.kind    // "add" | "update" | "cancel"
+s.payload.event   // { title, date: "2026-10-15", weekday, start: "19:00:00" | null, time_text, location, attendees, absent, note }
+```
+
+* `"add"`: "[일정] 10/15(목) 19:00 · 디스코드 · 팀 회의 / 참석: …" + [캘린더에 추가] [수정] [무시]
+* `"update"`: "기존 일정을 이렇게 바꿀까요?" / `"cancel"`: "10/15 회의를 취소할까요?"
+* 버튼: `act(s.id, "added")`, `act(s.id, "ignored")`, 수정은 폼에서 고친 값으로 `act(s.id, "edited", 고친값)`
+* 누가 버튼을 누르면 다른 팀원 화면의 카드도 자동으로 사라져요
+* AI 카드는 서버에 일정 모델이 연결돼야 실제로 떠요 (파트 1 담당). 그 전에는 더미 데이터로 카드 UI를 만들어 두면 돼요
+
+### 실시간이 되는지 확인
+
+브라우저 창 두 개(하나는 시크릿 창)에서 다른 계정으로 로그인하고, 같은 채널에서 메시지를 보내 보세요.
+
+### 구글 로그인
+
+1. 파트 1이 Google Cloud Console에서 Client ID를 만들어 server `.env`의 `GOOGLE_CLIENT_ID`와 web `.env.local`의 `NEXT_PUBLIC_GOOGLE_CLIENT_ID`에 넣어줘요
+2. [Google Identity Services](https://developers.google.com/identity/gsi/web) 버튼을 띄우고, 콜백으로 받은 `credential`을 `googleLogin(credential)`에 넘기면 끝이에요
+
+## 4. 작업 규칙
+
+* `main`에서 바로 작업하지 말고 브랜치를 따서 작게 PR을 올려요 (`feat/login-page`처럼)
+* PR 올리기 전에 `npm run lint && npm run build` 통과 확인 (CI도 똑같이 검사해요)
+* 서버 API가 바뀌면 `(cd ../server && git pull && make openapi) && npm run gen:api`로 타입을 다시 만들어요
+* 하루 이상 막히면 바로 물어보기
