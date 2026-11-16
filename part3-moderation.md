@@ -67,7 +67,6 @@ AI 성능은 데이터가 정한다는 걸 직접 확인하는 경험. 데이터
 git clone https://github.com/ai-class-project-2026/server.git
 cd server
 uv sync --group ml       # uv: https://docs.astral.sh/uv/
-uv run pytest            # 전부 통과하면 준비 끝
 ```
 
 ## 2. 지금 상태 (여기서 출발해요)
@@ -94,8 +93,7 @@ uv run python eval/moderation/score.py data/moderation/test_D_fp/sample.jsonl --
 | `backend/app/moderation/normalize.py` | 숫자/기호 → 한글 후보, 자모 재조합(ㅅㅣ발→시발), 영문 자판(tlqkf→시발), 반복 축약(시이이발→시발) | `(정규화된 글자, index_map)` 반환. `index_map[i]`는 정규화 글자 i가 **원문 몇 번째 글자**에서 왔는지. 이게 맞아야 화면에서 정확한 위치를 가려요 |
 | `backend/app/moderation/badwords.txt` | 욕설 단어 목록 (정규화된 형태로, 한 줄에 하나) | |
 | `backend/app/moderation/whitelist.txt` | 멀쩡한 단어 (시발점, 수박씨발라…) | 정규화된 형태로 |
-| `ml/moderation/augment/__init__.py` | 우회 변형 규칙 10종 (기획서 9.3). `insert_digit` 예시가 하나 있어요 | 함수 모양: `(text, rng) -> text` |
-| `backend/tests/test_augment.py` | 규칙마다 "입력 → 출력" 테스트 | `uv run pytest`로 확인 |
+| `ml/moderation/augment/__init__.py` | 우회 변형 규칙 10종 (기획서 9.3). `insert_digit` 예시가 하나 있어요 | 함수 모양: `(text, rng) -> text`. 규칙마다 "입력 → 출력" 예시를 PR에 적기 |
 | `data/moderation/test_C_human/`, `test_D_fp/` | 필터 뚫기 챌린지(C), 오탐 유도 문장 100개(D) | 한 줄에 `{"text": "...", "label": 0 또는 1, "type": "숫자 치환"}` |
 | `data/README.md` | 공개 데이터 출처와 라이선스 기록 | UnSmile은 평가 전용 (변경 금지 라이선스) |
 
@@ -120,6 +118,6 @@ uv run python -c "import sys; sys.path.insert(0,'backend'); from app.moderation 
 
 ## 5. 작업 규칙
 
-* 브랜치를 따서 작게 PR (`feat/augment-chosung`처럼). PR 전에 `uv run pytest`와 `uv run ruff check .` 통과 확인
+* 브랜치를 따서 작게 PR (`feat/augment-chosung`처럼). PR 전에 `make dev`로 서버가 뜨는지 확인
 * 단어 목록이나 규칙을 바꿨으면 PR 설명에 score.py 결과(전/후)를 붙여요
 * 하루 이상 막히면 바로 물어보기
