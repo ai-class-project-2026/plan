@@ -162,6 +162,6 @@ s.payload.event   // { title, date: "2026-10-15", weekday, start: "19:00:00" | n
 ## 4. 작업 규칙
 
 * `main`에서 바로 작업하지 말고 브랜치를 따서 작게 PR을 올려요 (`feat/login-page`처럼)
-* PR 올리기 전에 `npm run lint && npm run build` 통과 확인 (CI도 똑같이 검사해요)
+* PR 올리기 전에 `npm run lint && npm run build` 통과 확인
 * 서버 API가 바뀌면 `(cd ../server && git pull && make openapi) && npm run gen:api`로 타입을 다시 만들어요
 * 하루 이상 막히면 바로 물어보기

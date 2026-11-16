@@ -613,7 +613,6 @@ teamplmate-server/
 ### 16.4 이렇게 나누는 이유
 
 * 날짜 정규화(dateparse_ko)를 학습과 서빙이 같은 레포에서 import하므로 결과가 어긋나지 않는다
-* CI가 단순하다: web은 lint/build, server는 pytest/평가
 * 담당이 레포 단위로 나뉜다: 화면은 web, 백엔드와 AI는 server
 * DB 스키마, 인증, 실시간 채팅까지 전부 server(FastAPI)가 맡는다. web은 API와 WebSocket만 호출한다
 
@@ -655,7 +654,7 @@ teamplmate-server/
 
 **할 일**
 
-* 두 레포 뼈대, 폴더 구조, CI, .env 관리
+* 두 레포 뼈대, 폴더 구조, .env 관리
 * FastAPI 백엔드: DB 스키마(SQLAlchemy + Alembic), 인증(이메일 + JWT), 서비스 REST API, WebSocket 실시간 채팅
 * web 쪽 API 래퍼와 실시간 훅(`useMessages` 등). 화면은 파트 2가 만든다
 * API 스키마(`schemas.py`) 확정
