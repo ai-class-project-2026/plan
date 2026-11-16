@@ -109,7 +109,7 @@ uv run python -c "import sys; sys.path.insert(0,'backend'); from app.moderation 
 
 모델 학습은 파트 1이 해요. 이 파트는 학습에 쓸 데이터를 만들고 결과를 채점해요.
 
-1. 공개 데이터 + 증강으로 `data/moderation/train.jsonl` 만들기 (`{"text", "label"}`). 원본은 커밋하지 않아요 (`data/moderation/raw/`는 gitignore)
+1. 공개 데이터를 `data/moderation/raw/<이름>.jsonl`로 바꿔 두고 (`{"text", "label"}` 한 줄씩) `uv run python ml/moderation/build_train.py`를 실행하면 증강까지 해서 `data/moderation/train.jsonl`이 나와요. 테스트셋 C/D 문장은 자동으로 빠져요. 원본과 train.jsonl은 커밋하지 않아요 (gitignore)
 2. 파일을 만드는 스크립트와 건수(욕설/정상 비율)를 PR에 올리고 파트 1에 알려요. 파트 1이 `ml/moderation/train.py`로 학습하고 `export_onnx.py`로 서버에 붙여요
 3. 모델이 붙으면 같은 `eval/moderation/score.py`로 사전 필터 + 모델 전체를 채점해요. `--label`에 버전 이름(`kcelectra-v1`)을 넣으면 `eval/reports/moderation.csv`에 쌓여서 대시보드 그래프가 돼요
 4. 틀린 문장을 유형별로 모아 2차 학습 데이터에 보강해요

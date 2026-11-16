@@ -90,8 +90,8 @@ parse("내일 7시 ㄱㄱ", date(2026, 9, 30))
 
 ### 순서 (정답 먼저)
 
-1. 기획서 8.5 표의 규칙마다 "입력 → 정답 날짜" 예시를 여러 개씩, 총 100개 이상 정리해요. 기준일은 2026-09-30(수)
-2. `parse()`를 고친 뒤 직접 넣어서 확인해요: `uv run python -c "import sys, datetime as dt; sys.path.insert(0, 'ml/common'); from dateparse_ko import parse; print(parse('다음주 화', dt.date(2026, 9, 30)))"`
+1. `ml/common/dateparse_ko/examples.py`의 `EXAMPLES`에 기획서 8.5 표의 규칙마다 "입력 → 정답 날짜" 예시를 여러 개씩, 총 100개 이상 추가해요. 기준일은 2026-09-30(수)
+2. `uv run python ml/common/dateparse_ko/examples.py`를 돌리면 틀린 줄에 ✗가 떠요. `parse()`를 고쳐서 ✗를 없애요. 하나만 따로 보고 싶으면: `uv run python -c "import sys, datetime as dt; sys.path.insert(0, 'ml/common'); from dateparse_ko import parse; print(parse('다음주 화', dt.date(2026, 9, 30)))"`
 3. 예시가 전부 정답이 나오면 끝이에요
 
 지금 상태 (기준일 9/30 수):
@@ -143,7 +143,8 @@ uv run python eval/schedule/score.py data/schedule/pilot/pilot.jsonl preds_claud
 
 ## 4. 디스코드 봇 (플랜 B, 6주차)
 
-* 위치: `bots/discord/` (discord.py)
+* 위치: `bots/discord/bot.py` (뼈대 있음, `TODO(part 4)` 두 곳). 실행: `uv run --group bot --env-file .env python bots/discord/bot.py`
+* 채널에 `!일정`을 치면 최근 30개 메시지로 `/schedule`을 부르고, 다른 메시지는 `/moderate`로 검사해요
 * 서버의 AI API만 부르면 돼요: 메시지가 오면 `POST /moderate`, 최근 대화를 모아 `POST /schedule` (요청/응답 모양은 http://localhost:8000/docs 참고)
 * 헤더에 `X-API-Key: <서버 .env의 AI_API_KEY>`를 붙여요
 * 봇 토큰은 코드에 넣지 말고 `.env`에 (`DISCORD_TOKEN=`)

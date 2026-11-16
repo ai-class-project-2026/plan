@@ -117,7 +117,7 @@ const { data: members } = await api.GET("/workspaces/{workspace_id}/members", {
 
 ## 3. 화면별 할 일
 
-폴더 구조는 기획서 16.2를 따라요.
+폴더 구조는 기획서 16.2를 따라요. 아래 경로마다 빈 화면이 이미 있고, 할 일은 파일 맨 위 `TODO(part 2)` 주석에 적혀 있어요. 채팅 부품은 `components/chat/`(MessageList, MessageInput, MaskedMessage), AI 카드는 `components/schedule-card/ScheduleCard.tsx`예요. 서버 없이 만들 때는 `lib/dummy.ts`의 가짜 메시지·카드·일정·할 일을 넣어 보세요. `npm run dev` 후 http://localhost:3000 첫 화면에 모든 화면 링크가 있어요.
 
 | 화면 | 경로 | 쓰는 것 | 메모 |
 |---|---|---|---|
