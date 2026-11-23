@@ -94,7 +94,7 @@ uv run python eval/moderation/score.py data/moderation/test_D_fp/sample.jsonl --
 | `backend/app/moderation/badwords.txt` | 욕설 단어 목록 (정규화된 형태로, 한 줄에 하나) | |
 | `backend/app/moderation/whitelist.txt` | 멀쩡한 단어 (시발점, 수박씨발라…) | 정규화된 형태로 |
 | `ml/moderation/augment/__init__.py` | 우회 변형 규칙 10종 (기획서 9.3). `insert_digit` 예시가 하나 있어요 | 함수 모양: `(text, rng) -> text`. 규칙마다 "입력 → 출력" 예시를 PR에 적기 |
-| `data/moderation/test_C_human/`, `test_D_fp/` | 필터 뚫기 챌린지(C), 오탐 유도 문장 100개(D) | 한 줄에 `{"text": "...", "label": 0 또는 1, "type": "숫자 치환"}` |
+| `data/moderation/test_C_human/`, `test_D_fp/` | 필터 뚫기 챌린지(C), 오탐 유도 문장 100개(D) | 한 줄에 `{"text": "...", "label": 0 또는 1, "type": "숫자 치환"}`. 맥락이 필요한 문장은 `"context": ["이전 메시지", ...]`(오래된 순, 최대 3개)를 추가 |
 | `data/README.md` | 공개 데이터 출처와 라이선스 기록 | UnSmile은 평가 전용 (변경 금지 라이선스) |
 
 단어 목록과 테스트 문장의 라벨은 기획서 9.8 판정 기준을 따라요. 욕이 연상되기만 하는 말은 가리지 않고, 특정 욕으로 복원되는 표현만 가려요. `너임마청년`처럼 맥락에 따라 달라지는 표현은 `badwords.txt`에 넣지 말고 모델이 판정하게 해요.
@@ -111,7 +111,7 @@ uv run python -c "import sys; sys.path.insert(0,'backend'); from app.moderation 
 
 모델 학습은 파트 1이 해요. 이 파트는 학습에 쓸 데이터를 만들고 결과를 채점해요.
 
-1. 공개 데이터를 `data/moderation/raw/<이름>.jsonl`로 바꿔 두고 (`{"text", "label"}` 한 줄씩) `uv run python ml/moderation/build_train.py`를 실행하면 증강까지 해서 `data/moderation/train.jsonl`이 나와요. 테스트셋 C/D 문장은 자동으로 빠져요. 원본과 train.jsonl은 커밋하지 않아요 (gitignore)
+1. 공개 데이터를 `data/moderation/raw/<이름>.jsonl`로 바꿔 두고 (`{"text", "label"}` 한 줄씩, 대화 데이터는 이전 메시지 `context`도 함께. 라벨은 `text`에 대한 것) `uv run python ml/moderation/build_train.py`를 실행하면 증강까지 해서 `data/moderation/train.jsonl`이 나와요. 테스트셋 C/D 문장은 자동으로 빠져요. 원본과 train.jsonl은 커밋하지 않아요 (gitignore)
 2. 파일을 만드는 스크립트와 건수(욕설/정상 비율)를 PR에 올리고 파트 1에 알려요. 파트 1이 `ml/moderation/train.py`로 학습하고 `export_onnx.py`로 서버에 붙여요
 3. 모델이 붙으면 같은 `eval/moderation/score.py`로 사전 필터 + 모델 전체를 채점해요. `--label`에 버전 이름(`kcelectra-v1`)을 넣으면 `eval/reports/moderation.csv`에 쌓여서 대시보드 그래프가 돼요
 4. 틀린 문장을 유형별로 모아 2차 학습 데이터에 보강해요
