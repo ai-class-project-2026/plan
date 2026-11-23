@@ -97,6 +97,8 @@ uv run python eval/moderation/score.py data/moderation/test_D_fp/sample.jsonl --
 | `data/moderation/test_C_human/`, `test_D_fp/` | 필터 뚫기 챌린지(C), 오탐 유도 문장 100개(D) | 한 줄에 `{"text": "...", "label": 0 또는 1, "type": "숫자 치환"}` |
 | `data/README.md` | 공개 데이터 출처와 라이선스 기록 | UnSmile은 평가 전용 (변경 금지 라이선스) |
 
+단어 목록과 테스트 문장의 라벨은 기획서 9.8 판정 기준을 따라요. 욕이 연상되기만 하는 말은 가리지 않고, 특정 욕으로 복원되는 표현만 가려요. `너임마청년`처럼 맥락에 따라 달라지는 표현은 `badwords.txt`에 넣지 말고 모델이 판정하게 해요.
+
 정규화 함수를 고쳤으면 바로 확인해 보세요.
 
 ```sh
