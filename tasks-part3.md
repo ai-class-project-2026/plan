@@ -489,7 +489,7 @@ v3 파일이 없으면 왼쪽 칸만 확인하고, 오른쪽은 3-9에서 봐요
 
 **왜**: 발표 마무리가 "신고 → 재학습으로 계속 좋아지는 구조"예요 (기획서 15장 5번). 말만이 아니라 한 번은 해 봐야 해요.
 
-**준비물**: 3-1 환경, 테스트 계정(`make seed`가 만들어요), 동의 문구 결정(2-6). **결정 전에는 실제 사용자 메시지를 쓰지 않아요.** 지금 화면에는 "AI 학습에 쓰지 않아요"라고 적혀 있고(`components/app/consent.ts`), 기획서 11장은 "동의한 경우 익명화해서 사용"이라고 해서 서로 달라요
+**준비물**: 3-1 환경, 테스트 계정(`make seed`가 만들어요), 동의 문구 결정(2-6). **결정 전에는 실제 사용자 메시지를 쓰지 않아요.** 지금 화면에는 "AI 학습에 쓰지 않아요"라고 적혀 있고(`components/app/consent.ts`), 기획서 11장은 "동의한 경우 익명화해서 사용"이라고 해서 서로 달라요. **2026-11-25에 "따로 동의받은 경우만 익명으로 씀"으로 정했지만**, 동의를 받는 기능이 아직 없으니 만들기 전에는 테스트 계정으로만 해 봐요
 
 **순서**
 
@@ -631,19 +631,20 @@ v3 파일이 없으면 왼쪽 칸만 확인하고, 오른쪽은 3-9에서 봐요
 
    여기서 나온 문장은 C, D가 아니에요. `b_auto.jsonl`은 커밋하지 않고, 어느 커밋에서 만들었는지(`git rev-parse --short HEAD`)를 적어요.
 
-4. 아래를 위에서부터 돌려요. `--label`은 모델 이름이에요. `--level`은 건드리지 않아요 (기본 2, 채팅과 같음). A셋은 15,035줄이라 몇 분에서 수십 분 걸려요.
+4. 아래를 위에서부터 돌려요. `--label`은 모델 이름이에요. **공식 점수는 새 팀의 기본값인 3(엄격)이고, 2(보통)도 같은 시험지로 재서 둘 다 적어요** (2026-11-25, 점수를 보기 전에 정함). 유리한 쪽만 고르지 않아요. A셋은 15,035줄이라 몇 분에서 수십 분 걸려요.
 
    ```sh
-   run() { for t in moderation/test_C_human/test moderation/test_D_fp/test moderation/eval_only/kmhas_test moderation/eval_only/kotox_test moderation/eval_only/b_auto; do uv run python eval/moderation/score.py data/$t.jsonl --label "$1"; done; }
-   MODERATION_ONNX_PATH= run dict-v1
-   MODERATION_ONNX_PATH=$HOME/aip-models/moderation-v3-onnx run kcelectra-v3
+   run() { for t in moderation/test_C_human/test moderation/test_D_fp/test moderation/eval_only/kmhas_test moderation/eval_only/kotox_test moderation/eval_only/b_auto; do uv run python eval/moderation/score.py data/$t.jsonl --label "$1" --level "$2"; done; }
+   MODERATION_ONNX_PATH= run dict-v1 3
+   MODERATION_ONNX_PATH=$HOME/aip-models/moderation-v3-onnx run kcelectra-v3 3
+   MODERATION_ONNX_PATH=$HOME/aip-models/moderation-v3-onnx run kcelectra-v3-level2 2
    ```
 
-   첫 줄은 "지금 사전만", 둘째 줄은 "사전 + v3"예요.
+   차례로 "지금 사전만", "사전 + v3 (엄격)", "사전 + v3 (보통)"이에요. 모델이 없으면 단계가 달라도 결과가 같아요.
 
    점수는 `eval/reports/moderation.csv`에 쌓여요. 연습으로 한 번 더 돌렸으면 그 줄을 지우고 커밋해요 (같은 줄이 두 번 들어가요).
 
-5. "기존 필터"를 정하고 재요. 후보가 세 가지고 **아무 스크립트도 없어요.**
+5. **"기존 필터"는 ① 지금 사전만으로 정했어요** (파트 1, 2026-11-25, 가장 엄격한 비교). +20%p는 4번의 `dict-v1`과 `kcelectra-v3`의 C셋 F1 차이예요. ②와 ③은 참고로 같이 보여 줄 때만 재요. ②, ③은 **스크립트가 없어요.**
    * ① 지금 사전만: 4번의 `dict-v1`. 우리가 이미 고친 사전이라 "개선 전"이 아니에요
    * ② 개선 전 사전: 파트 3이 고치기 전 코드(`4b45d02`)를 따로 풀어서, 지금 채점기로 재요
 
@@ -658,7 +659,7 @@ v3 파일이 없으면 왼쪽 칸만 확인하고, 오른쪽은 3-9에서 봐요
 
      `../dict-v0`에는 테스트 문장이 들어 있으니 마지막 줄로 꼭 지워요. 샘플로 돌리면 C `f1` 0.5714, D `false_positive_rate` 0.25가 나와요. `cd`한 폴더 이름이 `server`가 아니면 `../server`를 내 폴더 이름으로 바꿔요.
    * ③ 오픈소스 사전 필터, 공개 욕설 모델: 무엇을 쓸지, 설치는 어떻게 할지 파트 1이 정해요 (새 의존성이라 파트 3이 혼자 추가하지 않아요). 점수를 손으로 낼 때는 판정(0/1)을 시트 한 열에 받아서 F1을 계산해요: C셋의 TP는 `=SUMPRODUCT((M2:M="O")*(B2:B="C")*(L2:L&""="1")*(P2:P&""="1"))`, FN은 마지막을 `="0"`으로 바꿔 세요. C는 욕만 있어서 FP는 0이고, F1은 `2*TP/(2*TP+FP+FN)`이에요 (`L`은 label, `P`는 판정 열). 웹 사이트나 외부 API에 테스트 문장을 보내지 않아요
-   * 보통 +20%p는 ②나 ③ 대비로 말해요. 정한 것과 이유를 점수표에 같이 적어요
+   * ①은 우리가 이미 고친 사전이라 +20%p를 못 넘을 수도 있어요. 그래도 기준을 바꾸지 않고 그대로 적어요
 
 6. 유형별로 나눠 봐요.
    * C: `f1_by_type`을 봐요. C는 label 1만 있어서 F1이 잡아낸 비율만으로 정해져요. 무엇이든 욕이라고 하는 필터도 1.0이 나오니 **C는 항상 D 오탐률과 나란히** 적어요. 표본이 작으니 "10개 중 8개"처럼 개수도 적어요. CSV에는 유형별 점수가 없으니 화면에서 옮겨 적어요
@@ -682,11 +683,11 @@ v3 파일이 없으면 왼쪽 칸만 확인하고, 오른쪽은 3-9에서 봐요
    git push -u origin eval/moderation-v3
    ```
 
-   PR에 적을 것: 서버 커밋(`git rev-parse --short HEAD`), 모델 폴더 이름, `level` 2, 비교 대상과 이유, 유형별 표(개수), 약점 표, 목표를 못 넘은 것. "사람 테스트셋"이라는 것과 건수, A/B는 학습하지 않은 공개 데이터라는 것도 같이 적어요. 틀린 문장은 붙이지 않아요.
+   PR에 적을 것: 서버 커밋(`git rev-parse --short HEAD`), 모델 폴더 이름, `level` 3과 2, 비교 대상과 이유, 유형별 표(개수), 약점 표, 목표를 못 넘은 것. "사람 테스트셋"이라는 것과 건수, A/B는 학습하지 않은 공개 데이터라는 것도 같이 적어요. 틀린 문장은 붙이지 않아요.
 
 **확인할 것**
 * 깨 보기: `MODERATION_ONNX_PATH=/없는폴더`로 C 샘플을 채점하면 오류 없이 `f1` 1.0이 나오고 경고(`moderation classifier failed: ...`)만 떠요. 그 줄이 보이면 **그 점수는 모델 점수가 아니에요.** 점수를 낼 때마다 이 경고가 없었는지 봐요
-* 깨 보기: `--level 3`으로 D를 돌려 봐요(`--report /tmp/part3-try.csv`). 필터가 더 세지니 오탐이 늘 수 있어요. 공식 점수는 2예요
+* 깨 보기: `--level 3`으로 D를 돌려 봐요(`--report /tmp/part3-try.csv`). 2보다 오탐이 늘어요. 파트 1의 개발용 자료에서는 평범한 댓글 2,476개의 오탐이 1.0%에서 1.3%로, 일부러 헷갈리게 만든 문맥 대화 740개는 5%에서 31%로 늘었어요. **D는 헷갈리는 문장이라 3%를 넘을 수 있어요. 넘으면 넘은 대로 적어요**
 * 빈 파일을 채점하면 `n` 0에 `f1` 1.0이 나와요. 점수표의 `n`이 시트 건수와 같은지 봐요
 * `eval/reports/moderation.csv`의 `testset` 칸이 `moderation/test_C_human/test`, `moderation/test_D_fp/test`로 같아야 대시보드에서 한 줄로 비교돼요
 

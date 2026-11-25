@@ -129,7 +129,7 @@ git commit -m "Read a weekday next to its date as one date"
 git push -u origin part4-dateparse
 ```
    AI 기록은 5번 PR에 들어 있으니 이 PR 설명에 5번 PR 링크를 적어요
-7. `ai_roleplay`를 어떻게 할지 파트 1과 정해요. 이미 공개 브랜치에 올라가 있어요. 권하는 방법은 "main에 넣지 않고 `seojinha`에 그대로 두기"예요. 브랜치를 지울지는 4-1의 두 PR이 모두 합쳐진 뒤 파트 4가 정해요. 지우면 `ai_roleplay`는 어디에도 남지 않아요
+7. `ai_roleplay`는 **main에 넣지 않기로 했어요** (파트 1, 2026-11-25). 이미 공개 브랜치에 올라가 있고 `seojinha`에 그대로 둬요. 브랜치를 지울지는 4-1의 두 PR이 모두 합쳐진 뒤 파트 4가 정해요. 지우면 `ai_roleplay`는 어디에도 남지 않아요
 
 **확인할 것**
 
@@ -229,7 +229,7 @@ uv run python -c "import sys, datetime as dt; sys.path.insert(0, 'ml/common'); f
 | ③ 바꾸자는 말만 나오고 못 정함 | 기존 일정은 다시 적지 않음 | 새 안 proposed만 | **기존 일정 confirmed + 새 안 proposed** |
 | ④ 바꾸자/취소하자고 했는데 거절되어 그대로 | 없음 | 없음 | **기존 일정 confirmed** (바꾸자였으면 새 안 rejected도) |
 
-2. ③④가 중요해요. 모델이 학습한 대로 "기존 일정 confirmed + 새 안 proposed"라고 답한 대화 하나를 채점해 보면, 정답에 기존 일정을 안 적었을 때는 오등록률 100%, 적었을 때는 0%가 나와요. 실제 앱(`reconcile.py`)은 이미 있는 똑같은 일정에는 카드를 만들지 않으니 사용자에게는 피해가 없어요. 고를 수 있는 것:
+2. ③④가 중요해요. **"가"로 정했어요** (파트 1, 2026-11-25, 점수를 보기 전에). `score.py`를 고칠 때 우리 모델만이 아니라 모든 모델에 똑같이 적용해요. 모델이 학습한 대로 "기존 일정 confirmed + 새 안 proposed"라고 답한 대화 하나를 채점해 보면, 정답에 기존 일정을 안 적었을 때는 오등록률 100%, 적었을 때는 0%가 나와요. 실제 앱(`reconcile.py`)은 이미 있는 똑같은 일정에는 카드를 만들지 않으니 사용자에게는 피해가 없어요. 고를 수 있는 것:
    * 가. 안내서대로 안 적고, 점수를 낼 때 "기존 일정과 똑같은 확정"은 세지 않게 `score.py`를 고친다 (내 파일. 실제 앱과 제일 비슷함)
    * 나. 학습처럼 기존 일정도 `confirmed`로 적는다 (학습 안 한 모델과 상용 LLM에게 불리)
    * 다. 그대로 두고, 이 이유로 틀린 개수를 따로 센다
@@ -869,7 +869,7 @@ uv run --group bot --env-file .env python bots/discord/bot.py
 
 1. 리허설마다 **새 팀**을 만들어요 (AI를 켠 채로 만들고, 세 명은 초대 링크로). 같은 결론의 카드는 같은 채널에서 다시 안 뜨고, `make seed`를 또 해도 이미 있으면 아무것도 바뀌지 않아요. 계정이 없으면 `make migrate && make seed`로 만들어요 (minjun, seoyeon, jiho, haeun @demo.com / demo1234)
    * Windows PowerShell: `$env:PYTHONPATH="backend;ml/common"` 다음 `uv run alembic upgrade head`, `uv run python backend/seed.py`
-2. `make seed`가 만든 팀("팀플 데모")을 꼭 써야 하면 **민준으로 로그인 → 설정 → AI 일정을 껐다가 다시 켜요.** 켜진 것으로 보이지만 켠 시각(`ai_enabled_at`)이 비어 있어서, 그대로 두면 카드가 하나도 안 떠요
+2. `make seed`가 만든 팀("팀플 데모")은 server `76647aa` 뒤에 새로 만든 DB면 그대로 써도 돼요. 그 전에 만든 DB라면 **민준으로 로그인 → 설정 → AI 일정을 껐다가 다시 켜요.**
 3. 시연 대본을 만들어요. 지킬 것:
    * 확정하는 말을 **다섯 번째 메시지**로. 5번째 메시지마다 바로 분석하고, 아니면 마지막 메시지 뒤 10초를 기다려요
    * 마지막 메시지 다섯 개 안에 날짜나 "확정", "취소", "회의" 같은 말이 있어야 분석해요
@@ -896,6 +896,6 @@ uv run --group bot --env-file .env python bots/discord/bot.py
 
 **끝 기준**: 처음부터 끝까지 두 번 연속 5분 안에 성공.
 
-**넘길 것**: 모두에게 실행 순서 쪽지와 안 된 것 목록. 파트 1에게 seed 문제(2번).
+**넘길 것**: 모두에게 실행 순서 쪽지와 안 된 것 목록.
 
 **막히면**: 카드가 안 뜨면 서버 창의 `schedule LLM failed`를 먼저 봐요. 없으면 AI 켠 시각(2번), 그다음 메시지 다섯 개에 날짜 말이 있는지 봐요.
