@@ -20,10 +20,10 @@
 
 * 우회 변형 규칙 10종이 다 있어요 (`ml/moderation/augment/__init__.py`의 `RULES`). `ml/TRAINING.md`의 "2/10종"과 [part3-moderation.md](part3-moderation.md) 2번 표("ㅅ1발 못 잡음")는 옛날 내용이에요
 * 사전이 확실(`badwords.txt`), 애매(`badwords_ambiguous.txt`) 두 개로 나뉘었어요. `d35e44b`에서 엿먹어, 빙신이 애매 목록으로 옮겨졌고, 모델이 읽지 못하는 긴 메시지 뒤쪽의 애매한 말은 가려요. `badwords_soundalike.txt`도 다시 만들었어요. `464596f`에서 **나쁜 뜻뿐이면 확실, 멀쩡한 뜻(동음이의어)이 있으면 애매**라는 기준으로 다시 나눴어요. 새 단어를 넣을 때도 이 기준을 따라요. 모두 main에 있어요
-* **욕설 모델 v3 학습이 끝났고 채택됐어요.** KcELECTRA를 고친 라벨과 문맥 대화 592줄로 학습한 것(seed 42)이에요
-  * 결과를 보기 전에 정한 규칙은 "seed 두 개가 모두 통과"였어요. seed 42는 전부 통과했고, seed 7은 하나(문맥이 있는 검증 데이터의 F1)에서 떨어졌어요. 그래서 처음에는 보류했다가 파트 1의 결정으로 seed 42를 채택했어요. 발표에서 물어보면 이대로 말해요
+* **욕설 모델 v4 학습이 끝났고 채택됐어요.** KcELECTRA를 고친 라벨, 문맥 대화, 혐오와 고인 조롱 기준으로 학습한 것(seed 123)이에요
+  * 결과를 보기 전에 정한 규칙은 "세 seed 중 둘이 통과"였는데 seed 123만 통과했어요. 혐오 표현과 문맥을 더 잘 잡아서 파트 1이 채택했어요. 앞선 v3(seed 42)도 기준에 못 미친 뒤 파트 1이 정한 모델이었어요. 발표에서 물어보면 이대로 말해요
   * 서버용 파일(ONNX)로 바꿔 뒀지만 **팀이 같이 쓰는 서버에는 아직 연결하지 않았어요**
-* 남은 약점: ① 문장 속 "병신년", "빙신" ② 다른 사람이 욕한 바로 다음의 멀쩡한 답장 ③ 강아지 "시바"(v3에서 더 나빠진 것)
+* 남은 약점: ① 문장 속 "병신년", "빙신" ② 다른 사람이 욕한 바로 다음의 멀쩡한 답장 ③ 앞 대화가 없는 강아지 "시바" ④ 나쁜 뜻뿐인 말을 인용하거나 설명하는 문장 (규칙이라 항상 가려요)
 * 아직 없는 것: 사람이 만든 C셋과 D셋, 욕설 라벨 검사 도구(`eval/moderation/`에는 `score.py`만 있어요), B셋을 만드는 스크립트, 비교군을 돌리는 스크립트, 신고를 꺼내는 스크립트. 이 문서에는 스크립트 없이 하는 가장 작은 방법을 적었어요
 
 ## 모든 작업에 걸리는 규칙
@@ -256,19 +256,20 @@ MODERATION_ONNX_PATH= uv run python eval/moderation/score.py /tmp/part3-bad.json
 2. 기본 D 100개와 약점 문장의 개수를 PR에 따로 적어요.
 3. 파트 1과 **채점 전에** 정해요: 목표(오탐률 3%)를 D 전체로 볼지, 약점을 뺀 100개로 볼지. 추천은 둘 다 적고 전체를 먼저 보여 주는 거예요. 점수를 본 뒤에 빼고 싶은 문장을 빼면 안 돼요.
 
-**확인할 것** (모델이 있을 때와 없을 때. v3 모델로 2026-11-25에 확인한 값)
+**확인할 것** (모델이 있을 때와 없을 때. v4 모델로 2026-11-25에 확인한 값)
 
-| 넣을 것 | 모델 없음 | v3 | 뜻 |
+| 넣을 것 | 모델 없음 | v4 | 뜻 |
 |---|---|---|---|
 | `mod '병신년'` | True, `dict` | True, 모델 | "병신"은 동음이의어라 모델이 판단해요. 앞 메시지가 없으면 욕으로 봐요 |
-| `mod '병신년' '올해가 무슨 해야?'` | True, `dict` | True, 모델 | 문맥이 약하면 아직 틀려요 |
-| `mod '병신년' '육십갑자 해 이름 적어 줘'` | True, `dict` | False (0.001), 모델 | 해 이름이라는 게 드러나면 풀려요 |
-| `mod '빙신'` | True, `dict` | False (0.23), 모델 | `d35e44b`로 애매 목록에 가서 모델이 정해요. 문장 속에 있으면 욕으로 읽기도 해요 |
+| `mod '병신년' '올해가 무슨 해야?'` | True, `dict` | False (0.0015), 모델 | 앞 대화가 있으면 풀려요 |
+| `mod '병신년' '육십갑자 해 이름 적어 줘'` | True, `dict` | False (0.0001), 모델 | 같은 이유예요 |
+| `mod '빙신'` | True, `dict` | True (0.99), 모델 | 앞 메시지가 없으면 욕으로 봐요 (v3는 통과시켰어요) |
+| `mod '맘충은 왜 혐오 표현일까'` | True, `dict` | True, `dict` | 나쁜 뜻뿐인 말이라 인용해도 가려요 (정한 규칙이에요) |
 | `mod '시바'` | True, `dict` | True, 모델 | 앞 메시지가 없으면 욕으로 봐요 |
 | `mod '시바' '강아지 종이 뭐야?'` | True, `dict` | False, 모델 | 문맥이 있으면 풀려요. 다른 문장에서는 틀릴 수 있어요 |
 | `mod '청년' '병신아'` | False, `dict` | **True, spans=[]** | 멀쩡한 말인데 앞 메시지 때문에 욕이 돼요. 가릴 위치가 없는데도 욕이라고 나와요 |
 
-v3 파일이 없으면 왼쪽 칸만 확인하고, 오른쪽은 3-9에서 봐요.
+v4 파일이 없으면 왼쪽 칸만 확인하고, 오른쪽은 3-9에서 봐요.
 
 **끝 기준**: 약점 4종이 각각 5개 이상 `use`=O로 있고, 3번의 결정이 글로 남아 있어요.
 
@@ -453,18 +454,18 @@ v3 파일이 없으면 왼쪽 칸만 확인하고, 오른쪽은 3-9에서 봐요
    ```
 
 2. 지금 코드는 `cat -n backend/app/moderation/__init__.py`처럼 열어서 읽어요. 읽는 순서는 `normalize.py` 맨 위 설명 → `dict_filter.py` → `candidate.py` → `classifier.py` → `__init__.py`의 `moderate()` → `build_train.py` 맨 위 설명이에요.
-3. 아래 질문을 **답부터 적고** 실행해서 맞는지 봐요. "모델 없음"은 `MODERATION_ONNX_PATH=`로 시작하고, "v3"는 `MODERATION_ONNX_PATH=모델폴더`로 시작해요 (예: `MODERATION_ONNX_PATH= mod '존맛'`).
+3. 아래 질문을 **답부터 적고** 실행해서 맞는지 봐요. "모델 없음"은 `MODERATION_ONNX_PATH=`로 시작하고, "v4"는 `MODERATION_ONNX_PATH=모델폴더`로 시작해요 (예: `MODERATION_ONNX_PATH= mod '존맛'`).
 
    | 질문 | 실행 | 맞는 답 |
    |---|---|---|
-   | 1. 확실한 욕과 애매한 말은 어디서 갈리나요? | `mod '시1발'`, `mod '시 발'` | 둘 다 모델 없으면 True, `dict`. 코드로는 앞의 것이 `certain`, 뒤의 것이 `ambiguous`예요 (`candidate.default_hits`: 원문에서 공백으로 떨어져 있으면 애매). v3면 앞은 `dict`(모델을 안 봐요), 뒤는 `moderation-v3-onnx` |
-   | 2. 모델이 없을 때 애매한 말은? | `mod '존맛'` | 모델 없음 True, `dict`. v3는 False |
+   | 1. 확실한 욕과 애매한 말은 어디서 갈리나요? | `mod '시1발'`, `mod '시 발'` | 둘 다 모델 없으면 True, `dict`. 코드로는 앞의 것이 `certain`, 뒤의 것이 `ambiguous`예요 (`candidate.default_hits`: 원문에서 공백으로 떨어져 있으면 애매). v4면 앞은 `dict`(모델을 안 봐요), 뒤는 `moderation-v4-onnx` |
+   | 2. 모델이 없을 때 애매한 말은? | `mod '존맛'` | 모델 없음 True, `dict`. v4는 False |
    | 3. 정규화가 원문을 어떻게 바꾸나요? | `mod '시발1가'`, `mod '게 새끼네'` | `restored`가 `시발가`, `게새끼네`. `spans`는 원문 위치 `[[0, 2]]`, `[[2, 4]]` |
    | 4. "ㅅ1발"은 왜 `restored`가 그대로 `ㅅ1발`인가요? | `mod 'ㅅ1발 뭐하냐'` | 기본 읽기는 없는 글자를 지어내지 않아요. 후보 읽기(`candidate.hits`)에서만 걸려서 가리지만, 복원 글자는 기본 읽기 것이에요. **기획서 9.1(복원형 "시발")과 다르니** 의견이 있으면 적어요 |
-   | 5. 애매한 말도 문맥 없이 긴 글 뒤에 있으면? | `mod "$(printf '회의 자료 정리해서 올려 주세요 %.0s' {1..15})존맛"` | True, `dict`, `spans=[[270, 272]]`. 모델은 128토큰만 읽어서 뒤를 못 봐요 (`d35e44b`의 `_seen_end`). v3도 True예요. 앞의 2번과 반대 결과예요 |
-   | 6. 사전에 없는 우회는? | `mod '너임마청년'`, `mod '너 임마 청년이 그러면 되냐'` | 모델 없음은 둘 다 False. v3도 앞의 것을 못 잡아요 (False). 기획서 9.8의 예시인데 아직 놓쳐요 |
-   | 7. 공백을 지워 생긴 욕은? | `mod '수박 씨 발아율'` | 모델 없음 True(`spans=[[3, 6]]`), v3 False. 사전이 애매로 보낸 것을 모델이 풀었어요 |
-   | 8. 앞 메시지가 판정을 바꾸나요? | `mod '청년'`과 `mod '청년' '병신아'` | 모델 없음은 둘 다 False. v3는 뒤의 것이 True인데 `spans`가 비어 있어요 (3-4의 약점) |
+   | 5. 애매한 말도 문맥 없이 긴 글 뒤에 있으면? | `mod "$(printf '회의 자료 정리해서 올려 주세요 %.0s' {1..15})존맛"` | True, `dict`, `spans=[[270, 272]]`. 모델은 128토큰만 읽어서 뒤를 못 봐요 (`d35e44b`의 `_seen_end`). v4도 True예요. 앞의 2번과 반대 결과예요 |
+   | 6. 사전에 없는 우회는? | `mod '너임마청년'`, `mod '너 임마 청년이 그러면 되냐'` | 모델 없음은 둘 다 False. v4도 앞의 것을 못 잡아요 (False). 기획서 9.8의 예시인데 아직 놓쳐요 |
+   | 7. 공백을 지워 생긴 욕은? | `mod '수박 씨 발아율'` | 모델 없음 True(`spans=[[3, 6]]`), v4도 True (0.99, 오탐). v3는 False였어요. 사전이 애매로 보낸 것을 모델이 정해요 |
+   | 8. 앞 메시지가 판정을 바꾸나요? | `mod '청년'`과 `mod '청년' '병신아'` | 모델 없음은 둘 다 False. v4는 뒤의 것이 True인데 `spans`가 비어 있어요 (3-4의 약점) |
    | 9. 파일 이름을 잘못 적으면? | `MODERATION_ONNX_PATH=/없는폴더 mod '존맛'` | 오류로 멈추지 않고 경고 한 줄과 함께 `dict`로 돌아가요. 점수를 잴 때 위험해요 (3-9) |
    | 10. `build_train.py --help`의 새 옵션 3개는? | `uv run python ml/moderation/build_train.py --help` | `--fixes`(라벨 덮어쓰기), `--hold-out`(더 뺄 문장), `--out`(저장 위치) |
    | 11. 변형이 욕을 새로 만들면 안 되는 이유는? | 아래 명령 | `False False True` (멀쩡한 문장에 욕을 만들거나 욕 문장을 멀쩡한 말로 바꾸면 버려요. "병@신"과 "병신"은 같은 문장 가족이에요) |
@@ -575,7 +576,7 @@ v3 파일이 없으면 왼쪽 칸만 확인하고, 오른쪽은 3-9에서 봐요
 
 **왜**: 기획서 4.2의 목표는 사람 테스트셋으로만 판정해요. 점수는 파트 4가 발표 자료에 쓰고, `eval/reports/moderation.csv`는 대시보드가 읽어요.
 
-**준비물**: 3-6이 main에 들어감, 파트 1의 겹침 확인 끝, 파트 1이 준 v3 모델 폴더(`model.onnx`, `tokenizer.json` 등. 커밋 금지, 레포 밖에 두기). 파트 1과 **먼저** 정할 것: ① "기존 필터"가 무엇인지 (아래) ② 3-4의 오탐률 계산법
+**준비물**: 3-6이 main에 들어감, 파트 1의 겹침 확인 끝, 파트 1이 준 v4 모델 폴더(`model.onnx`, `tokenizer.json` 등. 커밋 금지, 레포 밖에 두기). 파트 1과 **먼저** 정할 것: ① "기존 필터"가 무엇인지 (아래) ② 3-4의 오탐률 계산법
 
 **순서**
 
@@ -584,11 +585,11 @@ v3 파일이 없으면 왼쪽 칸만 확인하고, 오른쪽은 3-9에서 봐요
    ```sh
    git switch main && git pull
    uv sync --group ml --group onnx
-   export MODERATION_ONNX_PATH=$HOME/aip-models/moderation-v3-onnx
+   export MODERATION_ONNX_PATH=$HOME/aip-models/moderation-v4-onnx
    mod '존맛'
    ```
 
-   경로는 파트 1이 준 폴더를 내가 둔 곳으로 바꿔요. `is_profane=False`, `model_version='moderation-v3-onnx'`가 나와야 해요. `dict`가 나오면 연결이 안 된 거예요.
+   경로는 파트 1이 준 폴더를 내가 둔 곳으로 바꿔요. `is_profane=False`, `model_version='moderation-v4-onnx'`가 나와야 해요. `dict`가 나오면 연결이 안 된 거예요.
 
 2. A셋을 만들어요. 공개 데이터라 다시 받아야 해요 (인터넷 필요, gitignore).
 
@@ -637,15 +638,15 @@ v3 파일이 없으면 왼쪽 칸만 확인하고, 오른쪽은 3-9에서 봐요
    ```sh
    run() { for t in moderation/test_C_human/test moderation/test_D_fp/test moderation/eval_only/kmhas_test moderation/eval_only/kotox_test moderation/eval_only/b_auto; do uv run python eval/moderation/score.py data/$t.jsonl --label "$1" --level "$2"; done; }
    MODERATION_ONNX_PATH= run dict-v1 3
-   MODERATION_ONNX_PATH=$HOME/aip-models/moderation-v3-onnx run kcelectra-v3 3
-   MODERATION_ONNX_PATH=$HOME/aip-models/moderation-v3-onnx run kcelectra-v3-level2 2
+   MODERATION_ONNX_PATH=$HOME/aip-models/moderation-v4-onnx run kcelectra-v4 3
+   MODERATION_ONNX_PATH=$HOME/aip-models/moderation-v4-onnx run kcelectra-v4-level2 2
    ```
 
-   차례로 "지금 사전만", "사전 + v3 (엄격)", "사전 + v3 (보통)"이에요. 모델이 없으면 단계가 달라도 결과가 같아요.
+   차례로 "지금 사전만", "사전 + v4 (엄격)", "사전 + v4 (보통)"이에요. 모델이 없으면 단계가 달라도 결과가 같아요.
 
    점수는 `eval/reports/moderation.csv`에 쌓여요. 연습으로 한 번 더 돌렸으면 그 줄을 지우고 커밋해요 (같은 줄이 두 번 들어가요).
 
-5. **"기존 필터"는 ③ korcen 1.0.3으로 정했어요** (파트 1, 2026-11-25, 사람 테스트셋 점수를 보기 전). +20%p는 `korcen-1.0.3`과 `kcelectra-v3`(3단계)의 C셋 F1 차이예요. 지금 사전만(`dict-v1`)의 점수도 **꼭 같이** 적어서 모델을 붙인 효과를 보여 줘요. ②는 하고 싶을 때만 재요.
+5. **"기존 필터"는 ③ korcen 1.0.3으로 정했어요** (파트 1, 2026-11-25, 사람 테스트셋 점수를 보기 전). +20%p는 `korcen-1.0.3`과 `kcelectra-v4`(3단계)의 C셋 F1 차이예요. 지금 사전만(`dict-v1`)의 점수도 **꼭 같이** 적어서 모델을 붙인 효과를 보여 줘요. ②는 하고 싶을 때만 재요.
 
    ```sh
    for s in C_human D_fp; do MODERATION_ONNX_PATH= uv run --with korcen==1.0.3 python eval/moderation/score.py data/moderation/test_$s/test.jsonl --label korcen-1.0.3 --system korcen; done
@@ -675,7 +676,7 @@ v3 파일이 없으면 왼쪽 칸만 확인하고, 오른쪽은 3-9에서 봐요
 
      ```sh
      grep -F '"type": "약점: 해 이름"' data/moderation/test_D_fp/test.jsonl > /tmp/part3-d.jsonl
-     uv run python eval/moderation/score.py /tmp/part3-d.jsonl --label kcelectra-v3 --report /tmp/part3-try.csv
+     uv run python eval/moderation/score.py /tmp/part3-d.jsonl --label kcelectra-v4 --report /tmp/part3-try.csv
      rm /tmp/part3-d.jsonl
      ```
 
@@ -686,9 +687,9 @@ v3 파일이 없으면 왼쪽 칸만 확인하고, 오른쪽은 3-9에서 봐요
 8. 마지막에 결과 파일을 커밋해요. 이때도 Claude Code를 꺼요.
 
    ```sh
-   git switch -c eval/moderation-v3
-   git add eval/reports/moderation.csv && git commit -m "Add moderation v3 scores"
-   git push -u origin eval/moderation-v3
+   git switch -c eval/moderation-v4
+   git add eval/reports/moderation.csv && git commit -m "Add moderation v4 scores"
+   git push -u origin eval/moderation-v4
    ```
 
    PR에 적을 것: 서버 커밋(`git rev-parse --short HEAD`), 모델 폴더 이름, `level` 3과 2, 비교 대상과 이유, 유형별 표(개수), 약점 표, 목표를 못 넘은 것. "사람 테스트셋"이라는 것과 건수, A/B는 학습하지 않은 공개 데이터라는 것도 같이 적어요. 틀린 문장은 붙이지 않아요.
@@ -699,7 +700,7 @@ v3 파일이 없으면 왼쪽 칸만 확인하고, 오른쪽은 3-9에서 봐요
 * 빈 파일을 채점하면 `n` 0에 `f1` 1.0이 나와요. 점수표의 `n`이 시트 건수와 같은지 봐요
 * `eval/reports/moderation.csv`의 `testset` 칸이 `moderation/test_C_human/test`, `moderation/test_D_fp/test`로 같아야 대시보드에서 한 줄로 비교돼요
 
-**끝 기준**: CSV에 C, D, A, B의 `dict-v1`, `kcelectra-v3`와 "기존 필터" 점수가 있고, PR에 유형별 표와 약점 표, 목표 달성/미달이 적혀 있어요. 목표를 못 넘은 것도 그대로 적어요.
+**끝 기준**: CSV에 C, D, A, B의 `dict-v1`, `kcelectra-v4`와 "기존 필터" 점수가 있고, PR에 유형별 표와 약점 표, 목표 달성/미달이 적혀 있어요. 목표를 못 넘은 것도 그대로 적어요.
 
 **넘길 것**: `eval/reports/moderation.csv`와 표를 파트 1, 4에게. 대시보드는 web의 `public/reports/`에 이 CSV를 복사해야 진짜 점수로 바뀌니 파트 2에게도 알려요.
 
