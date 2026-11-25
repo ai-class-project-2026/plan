@@ -21,7 +21,7 @@
 **된 것**
 
 * server: DB 스키마와 마이그레이션, 인증, 워크스페이스/채널/메시지/일정/할 일/신고 API, WebSocket, 시연용 seed
-* server: 일정 파이프라인 `trigger → dateparse_ko 주석 → tracker(LLM) → reconcile`, 10초 디바운스 / 5턴마다 실행
+* server: 일정 파이프라인 `trigger → dateparse_ko 주석 → tracker(LLM) → reconcile`, 10초 디바운스(대화가 멈췄을 때만 실행)
 * server: 욕설 판정 뼈대(정규화 → 사전 필터 → ONNX 분류기 자리), `/moderate`, `/schedule`
 * server: 학습/평가 스크립트 `ml/schedule/synth/generate.py`, `ml/schedule/train_lora.py`, `ml/moderation/train.py`, `ml/moderation/export_onnx.py`, `eval/*/score.py`
 * web: 타입 생성된 API 클라이언트, 인증 헬퍼, 실시간 채팅 / AI 카드 훅
