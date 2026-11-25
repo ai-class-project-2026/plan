@@ -14,7 +14,7 @@ uv run python -c "import secrets; print(secrets.token_urlsafe(32))"
 
 | 번호 | 할 일 | 먼저 필요한 것 | 끝나면 누구에게 |
 |---|---|---|---|
-| 4-1 | `seojinha` 브랜치를 나눠서 main에 올리기 | 없음 | 파트 1 (리뷰) |
+| 4-1 | main에 합쳐진 내 작업 확인하기 | 없음 | 파트 1 (의견) |
 | 4-2 | 날짜 규칙을 문서, 코드에서 똑같이 맞추기 | 4-1 | 파트 1 |
 | 4-3 | 정답 약속 정하기 (기존 일정, 제목, 장소) | 4-2 | 파트 1, 라벨러 두 명 |
 | 4-4 | 역할극 준비 (사람, 동의, 방) | 없음 (4-1\~4-3과 같이 해도 됨) | 참가자 |
@@ -31,15 +31,15 @@ uv run python -c "import secrets; print(secrets.token_urlsafe(32))"
 
 ## 이미 된 것
 
-* **날짜 계산기**: main에서 `examples.py`가 249/249 정답이에요
+* **날짜 계산기**: main에서 `examples.py`가 270/270 정답이에요
 * **카드 120장** (R001\~R120): `data/schedule/real_test/cards/cards.md`. revise 24, confirm·proposal_only·partial_absent·relative_date 18씩, cancel·not_schedule 12씩
 * **도구**: `eval/schedule/`의 `import_chat.py`, `check_labels.py`, `run.py`, `score.py`, `guideline.md`
 * **날짜 규칙 결정**: 2026-11-25 plan 커밋 `a2be143`로 "요일만 말했는데 기준일이 그 요일이면 다음 주, 이번주 X요일은 당일"을 기획서 8.3, 8.5에 넣었어요
-* **아직 main에 없는 것**: server 레포의 원격 브랜치 `seojinha`(`bf98a4a`)에 파일럿 카드 20장, 약점 카드 24장, 고친 안내서, 그래프 도구가 있어요. 4-1에서 올려요
+* **2026-11-25 13:52에 `seojinha`의 작업이 main에 합쳐졌어요** (server `f3da547`): 파일럿 카드 20장, 약점 카드 24장, 고친 안내서, 도구 검사, 날짜 계산기. `ai_roleplay`, 그래프 도구(`chart.py`), 약점 카드 생성기는 넣지 않았고 커밋 `bf98a4a`에 남아 있어요
 
 **아직 하나도 없는 것: 사람이 한 대화, 사람이 단 정답, 최종 점수.**
 
-`seojinha`의 `data/schedule/real_test/ai_roleplay/`는 AI가 연기한 대화 164개와 AI가 단 정답이에요. 그 폴더의 README가 적어 둔 대로 **사람 시험지가 아니고**, 거기 있는 점수와 "라벨러 일치"는 발표에 쓰지 않아요.
+커밋 `bf98a4a`의 `data/schedule/real_test/ai_roleplay/`는 AI가 연기한 대화 164개와 AI가 단 정답이에요. 그 폴더의 README가 적어 둔 대로 **사람 시험지가 아니고**, 거기 있는 점수와 "라벨러 일치"는 발표에 쓰지 않아요.
 
 모델 상태: 일정 v4(대화 6,374개)는 2026-11-25 현재 학습 중이고 결과는 아직 몰라요. 지금 추천 모델은 "boost bf16 seed 7"이에요. 파트 1이 바뀌었다고 알리면 그 이름을 써요.
 
@@ -75,83 +75,41 @@ mkdir ../part4-work/chats
 
 ---
 
-## 4-1. `seojinha` 브랜치를 나눠서 main에 올리기
+## 4-1. main에 합쳐진 내 작업 확인하기
 
-**왜**: 파일럿·약점 카드와 고친 도구가 여기에만 있어요. 그런데 한꺼번에 합치면 문제가 세 가지예요.
-* `ai_roleplay/`가 같이 들어와요. `ml/schedule/build_train.py`는 `data/schedule/real_test/` 아래 jsonl의 문장(공백 빼고 6글자 이상)과 똑같은 말이 나오는 학습 대화를 통째로 빼요. AI 대화 164개에 흔한 말이 있으면, 다음에 학습 데이터를 만들 때 그 말이 든 학습 대화까지 빠져요. 시험지가 아닌 대화 때문에 뺄 이유는 없어요
-* 날짜 계산기 변경("10/15 목요일"을 날짜 하나로, "다음주 주말")이 들어와요. 지금 학습 중인 v4는 main의 계산기로 만든 프롬프트를 써요. 언제 합칠지는 파트 1이 정해야 해요
-* 팀이 아직 안 정한 정답 규칙이 안내서에 들어와요. 4-3에서 정할 때까지는 초안이에요
+**왜**: 내 브랜치의 작업을 다른 사람이 합쳤어요. 빠진 것이 없는지, 바뀐 것이 맞는지는 만든 사람이 제일 잘 알아요.
 
-**준비물**: git, GitHub 계정
-
-`seojinha` 브랜치는 **건드리지 않아요.** 새 브랜치에 파일을 복사해 올 뿐이에요. rebase, force push, 삭제를 하지 않고, 통째로 main에 merge하지도 않아요 (merge하면 `ai_roleplay`가 들어와요).
+**준비물**: server 레포. 원격의 `seojinha` 브랜치는 합친 뒤 지워졌어요. 내 컴퓨터에 아직 안 올린 커밋이 있으면 **지우거나 되돌리지 말고** 파트 1에게 먼저 말해요.
 
 **순서**
 
-1. 내 컴퓨터에만 있는 것이 없는지 봐요. 첫 명령에 고친 파일이 나오거나 둘째 명령에 커밋이 나오면, 쓰던 브랜치에서 커밋하고 `git push`부터 해요. 둘째가 `unknown revision`이면 내 컴퓨터에 그 브랜치가 없는 것이니 괜찮아요
-```sh
-git status --short
-git log --oneline origin/seojinha..seojinha
-```
-   다 올렸으면 새 브랜치를 만들어요. 마지막 명령에 아무것도 안 나와야 해요. 커밋이 나오면 그사이 main에서 같은 파일이 바뀐 것이라, 2번이 그 변경을 지우니 멈추고 파트 1에게 물어봐요
-```sh
-git fetch origin
-git switch -c part4-tools origin/main
-git log --oneline origin/seojinha..origin/main -- eval/schedule data/schedule/pilot data/schedule/real_test ml/common/dateparse_ko
-```
-2. 도구, 카드, AI 기록만 가져와요 (`ai_roleplay`와 날짜 계산기는 안 가져옴)
-```sh
-git checkout origin/seojinha -- eval/schedule data/schedule/pilot/cards data/schedule/real_test/hard_cards ai-sessions/part4
-git status --short
-```
-3. 검사해요
-```sh
-uv run python eval/schedule/score.py --demo
-uv run python eval/schedule/chart.py --demo
-uv run python ml/common/dateparse_ko/examples.py
-```
-4. `eval/schedule/guideline.md`를 손으로 세 군데 고쳐요
-   * `ai_roleplay` 이야기를 하는 줄(카드 묶음 아래): "AI 역할극 자료는 main에 없고, 시험과 라벨 연습에 쓰지 않는다"로 바꿔요 (7번 결정에 맞춰서)
-   * `--report agreement.csv`가 있는 줄: 4-8의 명령으로 바꿔요. 지금 명령은 **`eval/reports/schedule_by_type.csv`에도 줄을 적어서** 발표용 점수 파일이 더러워져요
-   * 평가 명령의 `preds_ours.jsonl`, `preds_claude.jsonl`: `../part4-work/preds_...`로 바꿔요
-5. 올리고 PR을 만들어요. 파트 1이 리뷰하고 합쳐요
-```sh
-git add eval/schedule data/schedule/pilot/cards data/schedule/real_test/hard_cards ai-sessions/part4
-git commit -m "Add pilot and weakness cards and label tools"
-git push -u origin part4-tools
-```
-6. 날짜 계산기는 따로 PR로 올리고, 제목에 "v4 학습 끝난 뒤 합치기"라고 적어요. 합칠 시점은 파트 1이 정해요
-```sh
-git switch -c part4-dateparse origin/main
-git checkout origin/seojinha -- ml/common/dateparse_ko
-uv run python ml/common/dateparse_ko/examples.py
-git commit -m "Read a weekday next to its date as one date"
-git push -u origin part4-dateparse
-```
-   AI 기록은 5번 PR에 들어 있으니 이 PR 설명에 5번 PR 링크를 적어요
-7. `ai_roleplay`는 **main에 넣지 않기로 했어요** (파트 1, 2026-11-25). 이미 공개 브랜치에 올라가 있고 `seojinha`에 그대로 둬요. 브랜치를 지울지는 4-1의 두 PR이 모두 합쳐진 뒤 파트 4가 정해요. 지우면 `ai_roleplay`는 어디에도 남지 않아요
-
-**확인할 것**
-
-| 해 보기 | 나와야 하는 것 |
-|---|---|
-| 2번 뒤 `git status --short` | 12줄. `ai_roleplay`와 `ml/`이 **하나도 없음** |
-| 3번 | `demo 통과` 두 번, `249/249 정답` |
-| 6번 `examples.py` | `267/267`, `7/7`, `10/10`, `11/11`, `19/19` |
-| `uv run python eval/schedule/import_chat.py P999 없는파일.txt` | `카드 P999가 data/schedule/pilot/cards/cards.jsonl에 없다` (P 카드 폴더를 알아본다는 뜻) |
-| `git diff --stat origin/main...origin/seojinha` (보기만 함) | `ai_roleplay`가 보임. 통째로 가져오지 않는 이유예요 |
-| 5번 뒤 `git ls-tree -r --name-only HEAD data/schedule/real_test` | `cards`, `hard_cards`와 `.gitkeep`만 |
-
-**끝 기준**: `part4-tools`가 main에 합쳐졌고, main에 `ai_roleplay`가 없어요. 합쳐졌으면 내 컴퓨터도 맞춰요. 다음 작업도 커밋하기 전에 늘 이 세 줄로 새 브랜치를 만들어요.
+1. 최신 코드를 받고 합쳐진 것을 봐요
 ```sh
 git switch main
 git pull
-git switch -c <브랜치 이름>
+git show --stat --first-parent -m f3da547
+uv run python ml/common/dateparse_ko/examples.py
+uv run python eval/schedule/score.py --demo
+```
+2. 내 컴퓨터의 `seojinha`에 main에 없는 커밋이 있는지 봐요. `bf98a4a`보다 뒤의 커밋이 나오면 파트 1에게 알려요
+```sh
+git log --oneline bf98a4a..seojinha
+```
+3. 날짜 계산기에서 하나가 원래 작업과 달라요. "바로 앞에 있는 날짜의 요일"만 합쳐요. "목요일 다음주 목요일"은 날짜 두 개로 남아요 (`f3da547` 설명). 반대하면 예시와 함께 알려요
+4. 빠진 것을 확인해요: `ai_roleplay`(main에 안 넣기로 함), `chart.py`(4-11은 스프레드시트로), 카드 생성기. 다시 필요하면 파트 1과 정해요
+
+**확인할 것**: `examples.py`가 270/270, `score.py --demo`가 통과, `git ls-tree -r --name-only HEAD data/schedule/real_test`에 `cards`, `hard_cards`, `.gitkeep`만.
+
+**끝 기준**: 합쳐진 내용이 맞다고 팀에 말했거나, 다른 점을 예시와 함께 알렸어요. 다음 작업부터는 커밋하기 전에 늘 main에서 새 브랜치를 만들어요.
+```sh
+git switch main
+git pull
+git switch -c <새 브랜치 이름>
 ```
 
-**넘길 것**: 파트 1에게 PR 두 개. 날짜 계산기 PR은 "v4 전에 합칠지, 뒤에 합칠지" 답을 받아요.
+**넘길 것**: 파트 1에게 의견.
 
-**막히면**: `git switch`가 "local changes"라고 막으면 아직 커밋하지 않은 것이 있어요. 쓰던 브랜치에서 커밋하고 다시 해요. `reset --hard`, `push --force`, `rebase`로 풀지 말고, 다른 git 오류는 화면 글자를 그대로 파트 1에게 보내요.
+**막히면**: `unknown revision seojinha`면 내 컴퓨터에 그 브랜치가 없는 거예요. 2번은 건너뛰어요.
 
 ## 4-2. 날짜 규칙을 문서, 코드에서 똑같이 맞추기
 
@@ -174,14 +132,12 @@ git switch -c <브랜치 이름>
 
 | 어디 | 지금 | 고칠 내용 |
 |---|---|---|
-| server main `eval/schedule/guideline.md` 70줄 | "기준일이 그 요일이면 당일" | 4-1의 PR이 합쳐지면 고쳐져요 |
-| `ml/common/dateparse_ko/examples.py` 42줄, 67줄 주석 | "요일만: 기준일 이후 가장 가까운 날", "이번주 X = 같은 규칙" | 이제 서로 다른 규칙이에요. 주석만 고쳐요 (`seojinha`에도 그대로 남아 있어요) |
+| `ml/common/dateparse_ko/examples.py` 42줄, 67줄 주석 | "요일만: 기준일 이후 가장 가까운 날", "이번주 X = 같은 규칙" | 이제 서로 다른 규칙이에요. 주석만 고쳐요 |
 | 기획서 8.3, 8.5 | 한 글자 요일 후보 규칙이 없음 | 8.5에 한 줄: "한 글자 요일(목, 수)은 후보로만 알리고 대화로 정한다. 바로 뒤에 시각이 오면 요일" |
 | 기획서 8.5 "이번 주말 = 이번 주 토/일" | 계산기는 토요일 (토요일이 지났으면 일요일) | 계산기대로 적기 |
-| 기획서 8.5 | 12시, 밤 1시, 새벽, "내일모레", 날짜 옆 요일이 없음 | 계산기: 12시=12:00, 밤 1시=01:00, 내일모레=+2. 날짜 옆 요일은 4-1의 날짜 PR이 합쳐진 뒤에 적기 |
+| 기획서 8.5 | 12시, 밤 1시, 새벽, "내일모레", 날짜 옆 요일이 없음 | 계산기: 12시=12:00, 밤 1시=01:00, 내일모레=+2. 날짜 옆 요일(10/15 목요일)은 날짜 하나 |
 | 기획서 8.6 ③, 8.9, 17.5 `score_pilot.py`, 16.3 `run_baselines.py` | 그런 파일 없음 | `eval/schedule/score.py`, `eval/schedule/run.py --target claude`로 |
 | `part4-date-data.md` 2장 "지금 상태" 표, 4장 "`TODO(part 4)` 두 곳" | 옛날 상태 | 다 됐음 / 한 곳 |
-| 전체 정리 7장 | 1번 줄은 "한 글자 요일 후보만 남음"으로 고쳤어요. 2번 줄은 안내서가 아직 옛 규칙 | 2번 줄은 4-1이 main에 합쳐진 뒤에 지우기 |
 
 **순서**
 
@@ -201,10 +157,10 @@ uv run python -c "import sys, datetime as dt; sys.path.insert(0, 'ml/common'); f
 | `목 아파` | `date=2026-10-01`, `tentative=True` (후보일 뿐, 정답에 안 적어요) |
 | `10시` | `date=None, time=None, time_text='10시'` |
 | `열시`, `7:30` | `[]` (계산기가 못 읽어요. **대화로 알 수 있으면 라벨은 사람이 적어요**) |
-| `10/15 목요일` | main: 날짜 두 개(10/15, 10/1) / 날짜 PR 뒤: 하나 |
+| `10/15 목요일` | 날짜 하나 (10/15) |
 | 일요일(2026-10-04)에 `일요일이잖아` | 10/11 (알려진 부작용. "오늘이 일요일"이라는 뜻이어도 다음 주로 읽어요) |
 
-일부러 틀리게: `examples.py`의 `("수 보자", D(2026, 10, 7))`을 `D(2026, 9, 30)`으로 잠깐 바꾸면 `✗ '수 보자'`가 나오고 248/249예요. 꼭 되돌려요.
+일부러 틀리게: `examples.py`의 `("수 보자", D(2026, 10, 7))`을 `D(2026, 9, 30)`으로 잠깐 바꾸면 `✗ '수 보자'`가 나오고 269/270이에요. 꼭 되돌려요.
 
 **끝 기준**: 기획서 8.3·8.5, `guideline.md`, `examples.py`가 같은 말을 하고 `examples.py`가 전부 정답이에요.
 
@@ -222,12 +178,12 @@ uv run python -c "import sys, datetime as dt; sys.path.insert(0, 'ml/common'); f
 
 1. 파트 1과 아래 네 줄을 정해요. 학습 쪽은 `ml/schedule/synth/scenarios.py`를 읽은 거예요 (고치지 않아요)
 
-| 대화 | main 안내서 | `seojinha` 안내서 | 학습 정답 |
-|---|---|---|---|
-| ① 기존 일정 날짜를 옮김 ("목요일 거 금요일로 미루자") | 옮김은 따로 없음. "취소하고 새 날짜를 잡았으면 옛 것 cancelled + 새 것 confirmed"만 있음 | 옮김 = 옛 것 rejected + 새 것 confirmed | `seojinha`와 같음 |
-| ② 기존 일정 시각만 바꿈 | 없음 | 옛 시각 rejected + 새 시각 confirmed (cancelled 아님) | 같음 |
-| ③ 바꾸자는 말만 나오고 못 정함 | 기존 일정은 다시 적지 않음 | 새 안 proposed만 | **기존 일정 confirmed + 새 안 proposed** |
-| ④ 바꾸자/취소하자고 했는데 거절되어 그대로 | 없음 | 없음 | **기존 일정 confirmed** (바꾸자였으면 새 안 rejected도) |
+| 대화 | 안내서 (main) | 학습 정답 |
+|---|---|---|
+| ① 기존 일정 날짜를 옮김 ("목요일 거 금요일로 미루자") | 옛 것 rejected + 새 것 confirmed | 같음 |
+| ② 기존 일정 시각만 바꿈 | 옛 시각 rejected + 새 시각 confirmed (cancelled 아님) | 같음 |
+| ③ 바꾸자는 말만 나오고 못 정함 | 기존 일정은 다시 적지 않음, 새 안 proposed | **기존 일정 confirmed + 새 안 proposed** |
+| ④ 바꾸자/취소하자고 했는데 거절되어 그대로 | 없음 | **기존 일정 confirmed** (바꾸자였으면 새 안 rejected도) |
 
 2. ③④가 중요해요. **"가"로 정했어요** (파트 1, 2026-11-25, 점수를 보기 전에). `score.py`를 고칠 때 우리 모델만이 아니라 모든 모델에 똑같이 적용해요. 모델이 학습한 대로 "기존 일정 confirmed + 새 안 proposed"라고 답한 대화 하나를 채점해 보면, 정답에 기존 일정을 안 적었을 때는 오등록률 100%, 적었을 때는 0%가 나와요. 실제 앱(`reconcile.py`)은 이미 있는 똑같은 일정에는 카드를 만들지 않으니 사용자에게는 피해가 없어요. 고를 수 있는 것:
    * 가. 안내서대로 안 적고, 점수를 낼 때 "기존 일정과 똑같은 확정"은 세지 않게 `score.py`를 고친다 (내 파일. 실제 앱과 제일 비슷함)
@@ -359,7 +315,7 @@ uv run python eval/schedule/import_chat.py P001 ../part4-work/chats/P001.txt
 uv run python eval/schedule/import_chat.py P001 ../part4-work/chats/P001.txt --rename "철수=민재,영희=시우"
 ```
 
-   카드 번호의 첫 글자로 저장 위치가 정해져요 (4-1이 합쳐진 뒤)
+   카드 번호의 첫 글자로 저장 위치가 정해져요
 
 | 카드 | 쌓이는 파일 |
 |---|---|
@@ -700,7 +656,7 @@ uv run python eval/schedule/score.py data/schedule/real_test/test.jsonl ../part4
 
 | 상황 | 화면 | 하는 일 |
 |---|---|---|
-| 모델이 안 붙음 | main의 `run.py`: 아주 짧은 시간(예: 8ms) + 전부 `0 events`, 그대로 저장됨 → 채점하면 **F1 0, 오등록률 0.0** | 점수를 쓰지 말 것. 4-1 뒤에는 `답이 전부 비어 있어서 저장하지 않았어요`로 멈춤 |
+| 모델이 안 붙음 | `run.py`가 `답이 전부 비어 있어서 저장하지 않았어요`로 멈춤 | 서버의 `SCHEDULE_LLM_URL`을 확인해요 |
 | 일부만 실패 | 서버 창에 `schedule LLM failed` | 그 점수는 버리고 다시 (30초를 넘기면 서버가 빈 답으로 처리해요) |
 | `401 Unauthorized` | `.env`에 `AI_API_KEY`가 있는데 `run.py`는 `.env`를 안 읽음 | `uv run --env-file .env --group ml python eval/schedule/run.py ...` |
 | `Connection refused` | 서버가 꺼짐 | 1번부터 |
@@ -737,11 +693,7 @@ uv run python eval/schedule/score.py data/schedule/real_test/test.jsonl ../part4
 
 **순서**
 
-1. 그래프를 그려요 (4-1 뒤에 있는 도구. 모델은 3개까지)
-```sh
-uv run python eval/schedule/chart.py --testset test.jsonl --labels qwen2.5-3b-base claude-zeroshot <버전 이름>
-```
-   `eval/reports/schedule_chart.html`을 브라우저로 열고 캡처해요. 다른 시험지는 `--testset`과 `--out eval/reports/schedule_chart_hard.html`처럼 이름을 바꿔요 (안 바꾸면 덮어써요)
+1. 그래프는 CSV를 스프레드시트에 복사해서 막대그래프로 그려요 (`chart.py`는 main에 없어요). 같은 `testset`, 같은 `n`인 줄끼리만 비교하고, 빈칸을 0으로 그리지 않아요
 2. 만들 그래프: ① 전체 4지표 (목표선 포함), ② 유형별 F1, ③ 약점별 F1(hard), ④ 우리 버전끼리의 변화(같은 시험지로 잰 줄만)
 3. 웹 대시보드(`/dashboard`)에 보여 주려면 파트 2에게 `schedule.csv`를 web의 `public/reports/`에 넣어 달라고 해요 (`moderation.csv`는 파트 3). CSV가 없으면 화면에 **지어낸 "예시 데이터"(v2 F1 0.91 등)** 가 나와요. 그 화면을 발표에 캡처하면 안 돼요
 4. 오류 분석표를 만들어요. 정답과 모델 답을 나란히 보여 주는 도구는 없어요. VS Code에서 `test.jsonl`과 `preds_..._test.jsonl`을 나란히 열고 **같은 줄 번호**를 비교해요. 점수가 낮은 유형부터 봐요 (hard의 시각만 변경은 **없던 cancelled를 냈는지**도 눈으로 세요. 점수에는 안 나와요)
@@ -757,16 +709,13 @@ uv run python eval/schedule/chart.py --testset test.jsonl --labels qwen2.5-3b-ba
 
 | 해 보기 | 결과 |
 |---|---|
-| 없는 라벨로 그래프 | `...에 이 label의 점수가 없어요` |
-| `n`이 다른 두 모델 | `label마다 대화 수가 달라서 비교할 수 없어요` |
-| 라벨 네 개 | `--labels를 1~3개 적어 주세요` |
 | 그래프 숫자와 CSV 숫자 | 하나하나 같아야 함. 틀리면 캡처하지 않기 |
 
 **끝 기준**: 그래프 4개, 오류 분석표, 목표를 못 넘은 항목 목록.
 
 **넘길 것**: 파트 1에게 오류 종류별 개수(대화 원문은 넘기지 않아요. 학습 아이디어로 쓰면 안 돼요). 파트 2에게 CSV.
 
-**막히면**: `chart.py`가 없으면(4-1 안 합쳐짐) CSV를 스프레드시트에 복사해 막대그래프로 그려요. 빈칸을 0으로 그리지 않아요.
+**막히면**: CSV에 내 모델 줄이 없으면 4-10의 `--label`과 `testset` 이름을 다시 봐요.
 
 ## 4-12. 디스코드 봇 마무리
 
