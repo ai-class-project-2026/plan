@@ -227,7 +227,7 @@ uv run python -c "import sys, datetime as dt; sys.path.insert(0, 'ml/common'); f
 2. **동의를 받아요.** 아래를 단톡에 붙여 넣고 한 명씩 "동의"라고 답을 받아요. 이름과 날짜를 `../part4-work/consent.txt`에 적어요 (커밋 금지)
 
 ```text
-[팀플메이트 역할극 참여 안내]
+[harmony 역할극 참여 안내]
 학교 과제에서 AI가 대화 속 약속을 잘 알아듣는지 시험하려고 역할극 대화를 모아요.
 
 - 하는 일: 카드에 적힌 역할대로 단톡에서 짧게 대화하기. 실제 약속 얘기는 하지 않아요.

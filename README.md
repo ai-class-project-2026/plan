@@ -1,4 +1,4 @@
-# 팀플메이트 최종 기획서
+# harmony 최종 기획서
 
 > 대화만 하면 AI가 확정된 약속을 캘린더에 올려주고, 우회 욕설까지 걸러주는 학생 팀 전용 협업 플랫폼
 
@@ -9,7 +9,7 @@
 
 | 항목  | 내용  |
 |-----|-----|
-| 서비스명 | 팀플메이트 (가칭) |
+| 서비스명 | harmony |
 | 한 줄 소개 | 채팅 + 캘린더 + 할 일을 하나로 묶고, AI 2개가 일정 정리와 욕설 검열을 대신 해주는 협업 공간 |
 | 타깃  | 중고등학생/대학생 팀 프로젝트, 동아리, 스터디 (3\~6명) |
 | 핵심 AI | ① 대화 기반 일정 생성 AI ② 우회 욕설 검열 AI |
@@ -542,15 +542,15 @@ GitHub 오가니제이션에 레포 2개를 만든다. 언어 기준(TypeScript 
 
 | 레포  | 언어  | 내용  | 담당  |
 |-----|-----|-----|-----|
-| teamplmate-web | TypeScript | Next.js 웹앱 (화면만, 백엔드 없음) | A   |
-| teamplmate-server | Python | FastAPI 백엔드(인증, DB, WebSocket, AI 서빙), 학습 코드, 평가, 데이터, 디스코드 봇 | A, B, C |
+| harmony-web | TypeScript | Next.js 웹앱 (화면만, 백엔드 없음) | A   |
+| harmony-server | Python | FastAPI 백엔드(인증, DB, WebSocket, AI 서빙), 학습 코드, 평가, 데이터, 디스코드 봇 | A, B, C |
 
 모델 가중치는 레포에 넣지 않고 Hugging Face Hub(비공개)에 버전별로 올린다. 대용량 데이터는 스크립트로 재현하거나 HF Datasets / 구글 드라이브에 둔다.
 
-### 16.2 teamplmate-web
+### 16.2 harmony-web
 
 ```
-teamplmate-web/
+harmony-web/
 ├── README.md
 ├── .env.example                # API_URL (FastAPI 서버 주소)
 ├── app/
@@ -574,10 +574,10 @@ teamplmate-web/
 └── package.json
 ```
 
-### 16.3 teamplmate-server
+### 16.3 harmony-server
 
 ```
-teamplmate-server/
+harmony-server/
 ├── README.md
 ├── .env.example
 ├── alembic.ini
