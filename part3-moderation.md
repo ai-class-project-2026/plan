@@ -94,12 +94,13 @@ uv run python eval/moderation/score.py data/moderation/test_D_fp/sample.jsonl --
 | `backend/app/moderation/badwords.txt` | 욕설 단어 목록 (정규화된 형태로, 한 줄에 하나) | |
 | `backend/app/moderation/badwords_intensifier.txt` | 강조하려고 붙이는 "개" 뒤에 오는 말 (웃, 좋, 짜증…). "개웃기네"의 "개"만 가려요 | "개"는 빼고 적어요. 다른 낱말이 되는 말(개구리의 구리)은 넣지 않아요 |
 | `backend/app/moderation/badwords_phrase.txt` | 소리만 바꿔 쓴 문장형 욕 (너임마청년, 니임마 청년, 니엄마 청년) | 정규화된 형태로. "니임마"는 "님마"가 돼요 |
+| `backend/app/moderation/badwords_alone.txt` | 다른 말 없이 혼자 쓰면 욕으로 보는 말 (자지, 보지) | 문장 안에서는 모델이 판단해요 |
 | `backend/app/moderation/whitelist.txt` | 멀쩡한 단어 (시발점, 수박씨발라…) | 정규화된 형태로 |
 | `ml/moderation/augment/__init__.py` | 우회 변형 규칙 10종 (기획서 9.3). `insert_digit` 예시가 하나 있어요 | 함수 모양: `(text, rng) -> text`. 규칙마다 "입력 → 출력" 예시를 PR에 적기 |
 | `data/moderation/test_C_human/`, `test_D_fp/` | 필터 뚫기 챌린지(C), 오탐 유도 문장 100개(D) | 한 줄에 `{"text": "...", "label": 0 또는 1, "type": "숫자 치환"}`. 맥락이 필요한 문장은 `"context": ["이전 메시지", ...]`(오래된 순, 최대 3개)를 추가 |
 | `data/README.md` | 공개 데이터 출처와 라이선스 기록 | UnSmile은 평가 전용 (변경 금지 라이선스) |
 
-단어 목록과 테스트 문장의 라벨은 기획서 9.8 판정 기준을 따라요. 욕이 연상되기만 하는 말은 가리지 않고, 특정 욕으로 복원되는 표현만 가려요. 맥락에 따라 달라지는 표현은 `badwords.txt`에 넣지 말고 모델이 판정하게 해요. 모델이 못 잡는 `너임마청년` 같은 말은 `badwords_phrase.txt`에 넣어요: 붙여 쓴 것은 언제나 가리고, 띄어 쓴 것은 글이 거기서 끝날 때만 가려요.
+단어 목록과 테스트 문장의 라벨은 기획서 9.8 판정 기준을 따라요. 욕이 연상되기만 하는 말은 가리지 않고, 특정 욕으로 복원되는 표현만 가려요. 맥락에 따라 달라지는 표현은 `badwords.txt`에 넣지 말고 모델이 판정하게 해요. 모델이 못 잡는 `너임마청년` 같은 말은 `badwords_phrase.txt`에 넣어요: 붙여 쓴 것은 언제나 가리고, 띄어 쓴 것은 뒤에 멀쩡한 글에서 오는 말("청년이 그러면", "청년 때")이 이어질 때만 모델에 맡겨요. 청소년용이라 갈릴 때는 가리는 쪽을 택해요 (기획서 9.8).
 
 정규화 함수를 고쳤으면 바로 확인해 보세요.
 
