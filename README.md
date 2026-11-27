@@ -176,7 +176,7 @@ P0: 시연에 꼭 필요 / P1: 완성도 상승 / P2: 시간 남으면
 
 1. 메시지 전송 시 서버에서 판정한 뒤 저장한다
 2. 욕설이면 욕 부분을 검은 줄로 가리고 "부적절한 표현이 가려졌어요 [보기]"를 붙인다. 가릴 곳이 3군데 이상이거나 글자의 절반 넘게 가려지면 메시지 전체를 가린다. 프로젝트 설정에 따라 가리지 않고 경고만 붙이거나, 방장 화면에 표시를 더한다
-3. 오탐이면 [욕설 아님]으로, 미탐이면 메시지에 마우스를 올렸을 때 나오는 깃발 버튼(욕설 신고)으로 신고한다
+3. 오탐이면 [욕설 아님]으로, 미탐이면 메시지에 마우스를 올렸을 때 나오는 깃발 버튼(욕설 신고)으로 신고한다. 내가 보낸 메시지도 신고할 수 있고, 신고한 문장은 신고 기록에 같이 저장된다
 
 ## 7. 화면 구성
 
@@ -602,14 +602,14 @@ events(id, workspace_id, title, date, start, time_text, location, status,
        attendees, absent, note, source('ai'|'manual'), source_message_ids)
 ai_suggestions(id, channel_id, payload_json,
                action('added'|'edited'|'ignored', 대기 중이면 비어 있음), model_version, created_at)
-reports(id, message_id, user_id, type('false_positive'|'missed'), created_at)
+reports(id, message_id, user_id, type('false_positive'|'missed'), text, created_at)
 todos(id, workspace_id, title, assignee_id, due_date, done)
 ```
 
 * `workspaces.ai_enabled_at`: AI 일정 도우미를 켠 시각. 이 뒤에 쓴 메시지만 분석한다
 * `messages.client_id`: 같은 메시지를 다시 보내도 한 번만 저장되게 하는 번호
 * `ai_suggestions.payload_json`: 카드 종류(add / update / cancel), 일정, 대상 일정 번호, 근거 메시지 번호. 말로 고친 카드는 AI가 처음 낸 일정도 담는다
-* `reports`: 한 사람이 같은 메시지를 같은 종류로 두 번 신고할 수 없다
+* `reports`: 한 사람이 같은 메시지를 같은 종류로 두 번 신고할 수 없다. `text`에는 신고한 때의 메시지 글을 같이 저장한다
 * ai_suggestions.action과 reports는 재학습/평가 데이터로 쓰려고 만든 칸이다. 지금은 저장만 한다 (11장). action의 ignored에는 서버가 자동으로 내린 카드와 다른 카드에 답해서 쓸모없어진 카드도 들어 있어서, 데이터로 쓰려면 사람이 누른 것과 구분하는 칸이 필요하다. 취소 카드의 [일정 취소하기]는 added로 기록된다
 
 ### 10.4 API 명세
