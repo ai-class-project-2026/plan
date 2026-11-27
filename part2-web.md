@@ -129,7 +129,6 @@ const { data: members } = await api.GET("/workspaces/{workspace_id}/members", {
 | 캘린더 | `app/w/[workspaceId]/calendar/` | `GET/POST /workspaces/{id}/events`, `PATCH/DELETE /events/{id}` | FullCalendar. `status === "cancelled"`는 숨기거나 회색 |
 | 할 일 | `app/w/[workspaceId]/todos/` | `GET/POST /workspaces/{id}/todos`, `PATCH/DELETE /todos/{id}` | 담당자는 멤버 목록에서 고르기 |
 | 설정 | `app/w/[workspaceId]/settings/` | `PATCH /workspaces/{id}` | owner만 저장 가능 (아니면 403). 내 역할은 멤버 목록에서 `useMe()`의 id로 찾기 |
-| 대시보드 | `app/dashboard/` | server의 `eval/reports/*.csv` | CSV를 `public/reports/`에 복사해서 차트로 |
 
 ### 욕설 가림 메시지
 
