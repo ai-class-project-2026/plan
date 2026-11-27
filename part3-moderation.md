@@ -92,6 +92,7 @@ uv run python eval/moderation/score.py data/moderation/test_D_fp/sample.jsonl --
 |---|---|---|
 | `backend/app/moderation/normalize.py` | 숫자/기호 → 한글 후보, 자모 재조합(ㅅㅣ발→시발), 영문 자판(tlqkf→시발), 반복 축약(시이이발→시발) | `(정규화된 글자, index_map)` 반환. `index_map[i]`는 정규화 글자 i가 **원문 몇 번째 글자**에서 왔는지. 이게 맞아야 화면에서 정확한 위치를 가려요 |
 | `backend/app/moderation/badwords.txt` | 욕설 단어 목록 (정규화된 형태로, 한 줄에 하나) | |
+| `backend/app/moderation/badwords_intensifier.txt` | 강조하려고 붙이는 "개" 뒤에 오는 말 (웃, 좋, 짜증…). "개웃기네"의 "개"만 가려요 | "개"는 빼고 적어요. 다른 낱말이 되는 말(개구리의 구리)은 넣지 않아요 |
 | `backend/app/moderation/whitelist.txt` | 멀쩡한 단어 (시발점, 수박씨발라…) | 정규화된 형태로 |
 | `ml/moderation/augment/__init__.py` | 우회 변형 규칙 10종 (기획서 9.3). `insert_digit` 예시가 하나 있어요 | 함수 모양: `(text, rng) -> text`. 규칙마다 "입력 → 출력" 예시를 PR에 적기 |
 | `data/moderation/test_C_human/`, `test_D_fp/` | 필터 뚫기 챌린지(C), 오탐 유도 문장 100개(D) | 한 줄에 `{"text": "...", "label": 0 또는 1, "type": "숫자 치환"}`. 맥락이 필요한 문장은 `"context": ["이전 메시지", ...]`(오래된 순, 최대 3개)를 추가 |

@@ -140,6 +140,7 @@ const { data: members } = await api.GET("/workspaces/{workspace_id}/members", {
 * `notify_admin`: `mask`처럼 가리고, owner 화면에는 따로 표시
 
 `is_profane`인데 `profanity_spans`가 비어 있으면 (AI 모델이 잡은 경우) 메시지 전체를 가려요.
+욕이 너무 많은 메시지도 전체를 가려요: 가린 곳이 3군데 이상이거나, 공백을 뺀 글자의 절반 넘게 가려질 때예요 (`lib/mask.ts`의 `tooProfane`, 2026-11-27).
 신고 버튼: `api.POST("/reports", { body: { message_id, type: "false_positive" } })` (멀쩡한데 가려짐) 또는 `"missed"` (욕인데 안 가려짐).
 
 ### AI 일정 카드
